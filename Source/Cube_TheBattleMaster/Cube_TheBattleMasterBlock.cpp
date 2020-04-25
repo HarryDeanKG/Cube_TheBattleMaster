@@ -2,6 +2,7 @@
 
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterBlockGrid.h"
+#include "Player_Cube.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -38,7 +39,7 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	BlockMesh->SetMaterial(0, ConstructorStatics.BlueMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
 	BlockMesh->OnClicked.AddDynamic(this, &ACube_TheBattleMasterBlock::BlockClicked);
-	BlockMesh->OnInputTouchBegin.AddDynamic(this, &ACube_TheBattleMasterBlock::OnFingerPressedBlock);
+
 
 	// Save a pointer to the orange material
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
@@ -52,18 +53,20 @@ void ACube_TheBattleMasterBlock::BlockClicked(UPrimitiveComponent* ClickedComp, 
 }
 
 
-void ACube_TheBattleMasterBlock::OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent)
-{
-	HandleClicked();
-}
 
 void ACube_TheBattleMasterBlock::HandleClicked()
 {
 	// Check we are not already active
 	if (!bIsActive)
 	{
-		bIsActive = true;
+		
+		//Unhighlight all other blocks
+		for (TObjectIterator<ACube_TheBattleMasterBlock> Block; Block; ++Block) {
+			Block->bIsActive = false;
+			Block->BlockMesh->SetMaterial(0, BlueMaterial);
+		}
 
+		bIsActive = true;
 		// Change material
 		BlockMesh->SetMaterial(0, OrangeMaterial);
 
@@ -72,6 +75,7 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 		{
 			OwningGrid->AddScore();
 		}
+		GetWorld()->SpawnActor<APlayer_Cube>(BlockPosition + (0, 100, 100), FRotator(0, 0, 0));
 	}
 }
 

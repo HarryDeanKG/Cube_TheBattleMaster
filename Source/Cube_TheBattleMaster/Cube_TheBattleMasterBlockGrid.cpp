@@ -49,6 +49,7 @@ void ACube_TheBattleMasterBlockGrid::BeginPlay()
 		if (NewBlock != nullptr)
 		{
 			NewBlock->OwningGrid = this;
+			NewBlock->BlockPosition = BlockLocation;
 		}
 	}
 }

@@ -46,13 +46,12 @@ public:
 	UFUNCTION()
 	void BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked);
 
-	/** Handle the block being touched  */
-	UFUNCTION()
-	void OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent);
 
 	void HandleClicked();
 
 	void Highlight(bool bOn);
+
+	FVector BlockPosition;
 
 public:
 	/** Returns DummyRoot subobject **/

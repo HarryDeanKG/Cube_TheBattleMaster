@@ -2,6 +2,7 @@
 
 #include "Cube_TheBattleMasterPawn.h"
 #include "Cube_TheBattleMasterBlock.h"
+
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -20,22 +21,10 @@ void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-		{
-			if (UCameraComponent* OurCamera = PC->GetViewTarget()->FindComponentByClass<UCameraComponent>())
-			{
-				FVector Start = OurCamera->GetComponentLocation();
-				FVector End = Start + (OurCamera->GetComponentRotation().Vector() * 8000.0f);
-				TraceForBlock(Start, End, true);
-			}
-		}
-		else
-		{
-			FVector Start, Dir, End;
-			PC->DeprojectMousePositionToWorld(Start, Dir);
-			End = Start + (Dir * 8000.0f);
-			TraceForBlock(Start, End, false);
-		}
+		FVector Start, Dir, End;
+		PC->DeprojectMousePositionToWorld(Start, Dir);
+		End = Start + (Dir * 8000.0f);
+		TraceForBlock(Start, End, false);
 	}
 }
 
@@ -43,7 +32,6 @@ void ACube_TheBattleMasterPawn::SetupPlayerInputComponent(UInputComponent* Playe
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("ResetVR", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::OnResetVR);
 	PlayerInputComponent->BindAction("TriggerClick", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::TriggerClick);
 }
 
@@ -54,10 +42,6 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 	OutResult.Rotation = FRotator(-90.0f, -90.0f, 0.0f);
 }
 
-void ACube_TheBattleMasterPawn::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
 
 void ACube_TheBattleMasterPawn::TriggerClick()
 {
@@ -65,6 +49,8 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 	{
 		CurrentBlockFocus->HandleClicked();
 	}
+	
+
 }
 
 void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
