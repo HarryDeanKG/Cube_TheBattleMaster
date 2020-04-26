@@ -23,6 +23,8 @@ public:
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
+	void Movement(FVector MovePosition);
+
 	/** Pointer to white material used on the focused block */
 	UPROPERTY()
 	class UMaterial* BaseMaterial;

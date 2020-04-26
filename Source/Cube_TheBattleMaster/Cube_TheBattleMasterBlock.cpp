@@ -59,7 +59,6 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 	// Check we are not already active
 	if (!bIsActive)
 	{
-		
 		//Unhighlight all other blocks
 		for (TObjectIterator<ACube_TheBattleMasterBlock> Block; Block; ++Block) {
 			Block->bIsActive = false;
@@ -75,7 +74,12 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 		{
 			OwningGrid->AddScore();
 		}
-		GetWorld()->SpawnActor<APlayer_Cube>(BlockPosition + (0, 100, 100), FRotator(0, 0, 0));
+		
+		for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
+			
+				PlayerCube->Movement(BlockPosition);
+			
+		}
 	}
 }
 

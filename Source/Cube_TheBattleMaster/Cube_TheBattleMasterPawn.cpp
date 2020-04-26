@@ -13,6 +13,7 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	: Super(ObjectInitializer)
 {
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	
 }
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)

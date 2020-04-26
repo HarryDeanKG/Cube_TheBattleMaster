@@ -31,13 +31,22 @@ APlayer_Cube::APlayer_Cube()
 	// Create static mesh component
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh0"));
 	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
-	BlockMesh->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	BlockMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
 	BlockMesh->SetRelativeLocation(FVector(0.f, 0.f, 125.f));
 	BlockMesh->SetMaterial(0, ConstructorStatics.BaseMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
 
 	// Save a pointer to the orange material
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
+}
+
+void APlayer_Cube::Movement(FVector MovePosition) {
+	
+	SetActorLocation(MovePosition);
+	
+	FVector test = GetActorLocation();
+
+	UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
 }
 
 

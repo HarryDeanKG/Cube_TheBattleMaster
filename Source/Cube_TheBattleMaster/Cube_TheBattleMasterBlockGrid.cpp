@@ -2,6 +2,7 @@
 
 #include "Cube_TheBattleMasterBlockGrid.h"
 #include "Cube_TheBattleMasterBlock.h"
+#include "Player_Cube.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
 
@@ -29,7 +30,8 @@ ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 void ACube_TheBattleMasterBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
-
+	//Get a player cube
+	GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;
 
