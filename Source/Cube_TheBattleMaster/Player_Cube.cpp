@@ -6,11 +6,20 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstance.h"
-
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APlayer_Cube::APlayer_Cube()
 {
+	bReplicateMovement = true;
+	bReplicates = true;
+	//
+	//ReplicatedMovement;
+	//SetReplicateMovement(true);
+	//SetReplicates(true);
+
+	
+
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -40,13 +49,25 @@ APlayer_Cube::APlayer_Cube()
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
 }
 
-void APlayer_Cube::Movement(FVector MovePosition) {
-	
-	SetActorLocation(MovePosition);
-	
-	FVector test = GetActorLocation();
 
-	UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
+
+void APlayer_Cube::Movement(FVector MovePosition) {
+	if (Role < ROLE_Authority)
+	{
+		Server_Movement(MovePosition);
+	//	SetActorLocation(MovePosition);
+	//	UE_LOG(LogTemp, Warning, TEXT("MOVE"));
+	}
+	SetActorLocation(MovePosition);
+	//FVector test = GetActorLocation();
+
+	//UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
 }
 
+bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {
+	return true;
+}
 
+void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) {
+	Movement(MovePosition);
+}

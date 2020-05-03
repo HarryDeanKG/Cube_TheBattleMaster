@@ -31,7 +31,18 @@ void ACube_TheBattleMasterBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	//Get a player cube
-	GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
+
+	//for (FConstPlayerControllerIterator iter = GetWorld()->GetPlayerControllerIterator(); iter; ++iter) {
+	//	APlayerController *playerController = iter->Get();
+	//	
+	//	//UE_LOG(LogTemp, Warning, TEXT('Player controler name %d'), playerController->NetPlayerIndex())
+
+	//	auto PlayerCube = GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
+	//	PlayerCube->PlayerOwner = playerController;
+	//}
+	
+
+
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;
 

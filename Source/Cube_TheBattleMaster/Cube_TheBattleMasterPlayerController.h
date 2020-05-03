@@ -14,6 +14,8 @@ class ACube_TheBattleMasterPlayerController : public APlayerController
 
 public:
 	ACube_TheBattleMasterPlayerController();
+
+
 };
 
 

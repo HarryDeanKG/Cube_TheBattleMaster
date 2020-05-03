@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Player_Cube.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
 
 UCLASS(config=Game)
@@ -13,15 +14,31 @@ class ACube_TheBattleMasterPawn : public APawn
 
 public:
 
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
+
+
 protected:
 	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_TriggerClick();
+
 	void TriggerClick();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MakeCube();
+
+	void MakeCube();
+
+	UPROPERTY(Replicated, EditAnyWhere)
+	APlayer_Cube* MyCube;
+
 	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)

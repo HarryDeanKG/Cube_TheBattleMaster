@@ -23,6 +23,10 @@ public:
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
+
+	UFUNCTION(Reliable, Server, WithValidation)
+	void Server_Movement(FVector MovePosition);
+
 	void Movement(FVector MovePosition);
 
 	/** Pointer to white material used on the focused block */
