@@ -2,19 +2,27 @@
 
 #include "Cube_TheBattleMasterPawn.h"
 #include "Cube_TheBattleMasterBlock.h"
+<<<<<<< HEAD
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPlayerController.h"
+=======
+
+>>>>>>> parent of 881ec9e... Server client block making
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+<<<<<<< HEAD
 #include "Net/UnrealNetwork.h"
 #include "UObject/UObjectIterator.h"
+=======
+>>>>>>> parent of 881ec9e... Server client block making
 
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
+<<<<<<< HEAD
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
 	//SetReplicates(true);
@@ -25,8 +33,11 @@ void ACube_TheBattleMasterPawn::BeginPlay()
 	Super::BeginPlay();
 
 	//SetCube();
+=======
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	
+>>>>>>> parent of 881ec9e... Server client block making
 }
-
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 {
@@ -46,7 +57,6 @@ void ACube_TheBattleMasterPawn::SetupPlayerInputComponent(UInputComponent* Playe
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("TriggerClick", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::TriggerClick);
-	
 }
 
 void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
@@ -57,6 +67,7 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 }
 
 
+<<<<<<< HEAD
 void ACube_TheBattleMasterPawn::SetCube()
 {
 	//if (Role < ROLE_Authority) {
@@ -103,22 +114,20 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 		else { SetCube(); }
 		UE_LOG(LogTemp, Warning, TEXT("hit"))
 		
-	}
-}
-
-bool ACube_TheBattleMasterPawn::Server_TriggerClick_Validate() {
-	return true;
-}
-
-void ACube_TheBattleMasterPawn::Server_TriggerClick_Implementation()
+=======
+void ACube_TheBattleMasterPawn::TriggerClick()
 {
-	TriggerClick();
-}
+	if (CurrentBlockFocus)
+	{
+		CurrentBlockFocus->HandleClicked();
+>>>>>>> parent of 881ec9e... Server client block making
+	}
+	
 
+}
 
 void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
 {
-	
 	FHitResult HitResult;
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
 	if (bDrawDebugHelpers)
@@ -131,7 +140,6 @@ void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVecto
 		ACube_TheBattleMasterBlock* HitBlock = Cast<ACube_TheBattleMasterBlock>(HitResult.Actor.Get());
 		if (CurrentBlockFocus != HitBlock)
 		{
-			
 			if (CurrentBlockFocus)
 			{
 				CurrentBlockFocus->Highlight(false);
@@ -148,9 +156,4 @@ void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVecto
 		CurrentBlockFocus->Highlight(false);
 		CurrentBlockFocus = nullptr;
 	}
-}
-
-void ACube_TheBattleMasterPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const {
-
-	DOREPLIFETIME(ACube_TheBattleMasterPawn, MyCube);
 }

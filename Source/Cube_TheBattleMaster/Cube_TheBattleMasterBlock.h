@@ -43,20 +43,15 @@ public:
 	class ACube_TheBattleMasterBlockGrid* OwningGrid;
 
 	/** Handle the block being clicked */
-	//UFUNCTION()
-	//void BlockClicked( FKey ButtonClicked);
-
-	
-
 	UFUNCTION()
+	void BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked);
+
+
 	void HandleClicked();
 
 	void Highlight(bool bOn);
 
-	
 	FVector BlockPosition;
-
-
 
 public:
 	/** Returns DummyRoot subobject **/

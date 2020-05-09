@@ -6,15 +6,18 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstance.h"
-#include "Net/UnrealNetwork.h"
+
 
 // Sets default values
 APlayer_Cube::APlayer_Cube()
 {
+<<<<<<< HEAD
 	bReplicateMovement = true;
 	bReplicates = true;
 	
 
+=======
+>>>>>>> parent of 881ec9e... Server client block making
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -46,21 +49,25 @@ APlayer_Cube::APlayer_Cube()
 	Owner2 = GetOwner();
 }
 
-
-
 void APlayer_Cube::Movement(FVector MovePosition) {
+<<<<<<< HEAD
 	//if (Role < ROLE_Authority)
 	//{
 	//	Server_Movement(MovePosition);
 	//	//SetActorLocation(MovePosition);
 	////	UE_LOG(LogTemp, Warning, TEXT("MOVE"));
 	//}
+=======
+	
+>>>>>>> parent of 881ec9e... Server client block making
 	SetActorLocation(MovePosition);
-	//FVector test = GetActorLocation();
+	
+	FVector test = GetActorLocation();
 
-	//UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
 }
 
+<<<<<<< HEAD
 //bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {
 //	return true;
 //}
@@ -68,3 +75,6 @@ void APlayer_Cube::Movement(FVector MovePosition) {
 //void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) {
 //	Movement(MovePosition);
 //}
+=======
+
+>>>>>>> parent of 881ec9e... Server client block making

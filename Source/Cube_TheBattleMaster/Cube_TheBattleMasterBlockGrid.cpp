@@ -29,7 +29,12 @@ ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 void ACube_TheBattleMasterBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
+<<<<<<< HEAD
 
+=======
+	//Get a player cube
+	GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
+>>>>>>> parent of 881ec9e... Server client block making
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;
 

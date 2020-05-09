@@ -14,6 +14,7 @@ class ACube_TheBattleMasterPlayerController : public APlayerController
 
 public:
 	ACube_TheBattleMasterPlayerController();
+<<<<<<< HEAD
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_MakeCube();
@@ -22,6 +23,8 @@ public:
 
 	UPROPERTY()
 	TArray<AActor*> CubeArray;
+=======
+>>>>>>> parent of 881ec9e... Server client block making
 };
 
 

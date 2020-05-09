@@ -8,11 +8,8 @@
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstance.h"
 
-
 ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 {
-	
-	
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -41,9 +38,8 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	BlockMesh->SetRelativeLocation(FVector(0.f,0.f,25.f));
 	BlockMesh->SetMaterial(0, ConstructorStatics.BlueMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
-	//BlockMesh->OnClicked.AddDynamic(this, &ACube_TheBattleMasterBlock::BlockClicked);
-	
-	
+	BlockMesh->OnClicked.AddDynamic(this, &ACube_TheBattleMasterBlock::BlockClicked);
+
 
 	// Save a pointer to the orange material
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
@@ -51,13 +47,10 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
 }
 
-//void ACube_TheBattleMasterBlock::BlockClicked(FKey ButtonClicked)
-//{
-//	HandleClicked();
-//	//UE_LOG(LogTemp, Warning, TEXT("UPrimitiveComponent = %s"), *ClickedComp->GetName());
-//	UE_LOG(LogTemp, Warning, TEXT("FKey = %s"), *ButtonClicked.ToString());
-//	
-//}
+void ACube_TheBattleMasterBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked)
+{
+	HandleClicked();
+}
 
 
 
@@ -82,23 +75,11 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 			OwningGrid->AddScore();
 		}
 		
-		//UE_LOG(LogTemp, Warning, TEXT("Test %s"), GetOwner());
-
-		/*for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
+		for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
 			
-			if (PlayerCube->GetOwner()) {
-				UE_LOG(LogTemp, Warning, TEXT("Cube Owner %s"), *(PlayerCube->GetOwner()->GetName()));
-			}
-			if (GetOwner())
-			{
-				FString NameTest = GetOwner()->GetName();
-				UE_LOG(LogTemp, Warning, TEXT("Block Owner %s"), *(GetOwner()->GetName()));
-			}
-			if (PlayerCube->GetOwner() == GetOwner()){
-				UE_LOG(LogTemp, Warning, TEXT("hit"), PlayerCube->GetOwner());
 				PlayerCube->Movement(BlockPosition);
-			}
-		}*/
+			
+		}
 	}
 }
 
