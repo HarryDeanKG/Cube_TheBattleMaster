@@ -15,7 +15,13 @@ class ACube_TheBattleMasterPlayerController : public APlayerController
 public:
 	ACube_TheBattleMasterPlayerController();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MakeCube();
 
+	void MakeCube();
+
+	UPROPERTY()
+	TArray<AActor*> CubeArray;
 };
 
 

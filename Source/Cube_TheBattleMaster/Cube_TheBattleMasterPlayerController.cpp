@@ -10,7 +10,25 @@ ACube_TheBattleMasterPlayerController::ACube_TheBattleMasterPlayerController()
 	bEnableClickEvents = true;
 	bEnableTouchEvents = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
-	//GetWorld()->SpawnActor<APlayer_Cube>(FVector(0, 0, 0), FRotator(0, 0, 0));
+	
+	//MakeCube();
 }
 
+void ACube_TheBattleMasterPlayerController::MakeCube()
+{
+	if (Role < ROLE_Authority) {
+		Server_MakeCube();
+	}
+	auto Next_Cube=GetWorld()->SpawnActor<APlayer_Cube>(FVector(0, 0, 0), FRotator(0, 0, 0));
 
+	CubeArray.Add(Next_Cube);
+}
+
+bool ACube_TheBattleMasterPlayerController::Server_MakeCube_Validate() {
+	return true;
+}
+
+void ACube_TheBattleMasterPlayerController::Server_MakeCube_Implementation()
+{
+	MakeCube();
+}

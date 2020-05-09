@@ -16,25 +16,27 @@ public:
 
 	virtual void BeginPlay() override;
 
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
+	//UFUNCTION(Client, Reliable, WithValidation)
+	void Server_SetCube();
+
+	void SetCube();
+
 
 
 protected:
 	
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_TriggerClick();
-
+	
 	void TriggerClick();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MakeCube();
-
-	void MakeCube();
+	void Server_TriggerClick();
 
 	UPROPERTY(Replicated, EditAnyWhere)
 	APlayer_Cube* MyCube;

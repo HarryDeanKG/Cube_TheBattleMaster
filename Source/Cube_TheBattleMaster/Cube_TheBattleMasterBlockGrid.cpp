@@ -2,7 +2,6 @@
 
 #include "Cube_TheBattleMasterBlockGrid.h"
 #include "Cube_TheBattleMasterBlock.h"
-#include "Player_Cube.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
 
@@ -30,18 +29,6 @@ ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 void ACube_TheBattleMasterBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
-	//Get a player cube
-
-	//for (FConstPlayerControllerIterator iter = GetWorld()->GetPlayerControllerIterator(); iter; ++iter) {
-	//	APlayerController *playerController = iter->Get();
-	//	
-	//	//UE_LOG(LogTemp, Warning, TEXT('Player controler name %d'), playerController->NetPlayerIndex())
-
-	//	auto PlayerCube = GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
-	//	PlayerCube->PlayerOwner = playerController;
-	//}
-	
-
 
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;

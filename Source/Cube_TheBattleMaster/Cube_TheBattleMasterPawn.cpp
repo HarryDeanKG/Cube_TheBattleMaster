@@ -3,29 +3,28 @@
 #include "Cube_TheBattleMasterPawn.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Player_Cube.h"
+#include "Cube_TheBattleMasterPlayerController.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "UObject/UObjectIterator.h"
 
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
-	//bReplicates = true;
-	SetReplicates(true);
+	//SetReplicates(true);
 }
 
 void ACube_TheBattleMasterPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-		
-	MakeCube();
+	//SetCube();
 }
 
 
@@ -58,44 +57,52 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 }
 
 
-void ACube_TheBattleMasterPawn::MakeCube()
+void ACube_TheBattleMasterPawn::SetCube()
 {
-	if (Role < ROLE_Authority) {
-		Server_MakeCube();
+	//if (Role < ROLE_Authority) {
+	//	Server_SetCube();
+	//}
+	//if (MyCube == nullptr) {
+	ACube_TheBattleMasterPlayerController* DummyControler = Cast<ACube_TheBattleMasterPlayerController>(GetController());
+	DummyControler->MakeCube();
+	MyCube = Cast<APlayer_Cube>(DummyControler->CubeArray.Last());
+	MyCube->SetOwner(this);
+	MyCube->Owner2 = this;
+
+	
+	for (TObjectIterator<APlayer_Cube> Cubes; Cubes; ++Cubes) {
+		if (Cubes->GetOwner() == nullptr) { Cubes->Destroy(); }
 	}
 
-	MyCube = GetWorld()->SpawnActor<APlayer_Cube>(FVector(0, 0, 0), FRotator(0, 0, 0));
 
-	//float test = GetWorld()->GetNumPlayerControllers();
-	//FString test = GetPlayerState()->GetName();
-	//UE_LOG(LogTemp, Warning, TEXT("Cube Owner %s"), test);
-
-	MyCube->SetOwner(this);
-	//PlayerCube->bReplicateMovement =true;
-	//PlayerCube->SetReplicates(true);
+	//}
 }
 
-bool ACube_TheBattleMasterPawn::Server_MakeCube_Validate() {
-	return true;
-}
+//
+//bool ACube_TheBattleMasterPawn::Server_SetCube_Validate() {
+//	
+//	return false;
+//}
+//
+//void ACube_TheBattleMasterPawn::Server_SetCube_Implementation()
+//{
+//	SetCube();
+//}
 
-void ACube_TheBattleMasterPawn::Server_MakeCube_Implementation()
-{
-	MakeCube();
-}
 
 
 void ACube_TheBattleMasterPawn::TriggerClick()
 {
 	if (Role < ROLE_Authority) {
 		Server_TriggerClick();
-
 	}
 	if (CurrentBlockFocus)
 	{
 		CurrentBlockFocus->HandleClicked();
+		if (MyCube != nullptr) { MyCube->Movement(CurrentBlockFocus->BlockPosition); }
+		else { SetCube(); }
 		UE_LOG(LogTemp, Warning, TEXT("hit"))
-		MyCube->Movement(CurrentBlockFocus->BlockPosition);
+		
 	}
 }
 
