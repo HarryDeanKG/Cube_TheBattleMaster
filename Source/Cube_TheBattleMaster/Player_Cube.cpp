@@ -11,13 +11,10 @@
 // Sets default values
 APlayer_Cube::APlayer_Cube()
 {
-<<<<<<< HEAD
+
 	bReplicateMovement = true;
 	bReplicates = true;
 	
-
-=======
->>>>>>> parent of 881ec9e... Server client block making
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -46,35 +43,43 @@ APlayer_Cube::APlayer_Cube()
 	// Save a pointer to the orange material
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
 
+	//Create camera components
+	OurCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
+	OurCameraSpringArm->SetupAttachment(DummyRoot);
+	OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 2200.0f), FRotator(-90.0f, 0.0f, 0.0f));
+	OurCameraSpringArm->TargetArmLength = 400.f;
+	OurCameraSpringArm->bEnableCameraLag = true;
+	OurCameraSpringArm->CameraLagSpeed = 3.0f;
+
+	OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
+	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
+
+	//Extra (none nessessary) variables
 	Owner2 = GetOwner();
 }
 
+
 void APlayer_Cube::Movement(FVector MovePosition) {
-<<<<<<< HEAD
-	//if (Role < ROLE_Authority)
-	//{
-	//	Server_Movement(MovePosition);
-	//	//SetActorLocation(MovePosition);
-	////	UE_LOG(LogTemp, Warning, TEXT("MOVE"));
-	//}
-=======
-	
->>>>>>> parent of 881ec9e... Server client block making
+
+	if (Role < ROLE_Authority)
+	{
+		Server_Movement(MovePosition);
+		//SetActorLocation(MovePosition);
+	//	UE_LOG(LogTemp, Warning, TEXT("MOVE"));
+	}
+
 	SetActorLocation(MovePosition);
 	
-	FVector test = GetActorLocation();
+	//FVector test = GetActorLocation();
 
-	UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
 }
 
-<<<<<<< HEAD
-//bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {
-//	return true;
-//}
-//
-//void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) {
-//	Movement(MovePosition);
-//}
-=======
 
->>>>>>> parent of 881ec9e... Server client block making
+bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {
+	return true;
+}
+
+void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) {
+	Movement(MovePosition);
+}

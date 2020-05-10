@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Player_Cube.generated.h"
 
 UCLASS()
@@ -23,14 +25,13 @@ public:
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
-<<<<<<< HEAD
-/*
+
+
 	UFUNCTION(Reliable, Server, WithValidation)
-	void Server_Movement(FVector MovePosition);*/
+	void Server_Movement(FVector MovePosition);
 
 	//Called by Server movement and vicaversa
-=======
->>>>>>> parent of 881ec9e... Server client block making
+
 	void Movement(FVector MovePosition);
 
 	/** Pointer to white material used on the focused block */
@@ -40,10 +41,18 @@ public:
 	UPROPERTY(EditAnywhere)
 	AActor* Owner2;
 
+protected:
+	UPROPERTY(EditAnywhere)
+	USpringArmComponent* OurCameraSpringArm;
+	UCameraComponent* OurCamera;
+
 public:
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
+
+	/** Returns BlockMesh subobject **/
+	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
 
 };

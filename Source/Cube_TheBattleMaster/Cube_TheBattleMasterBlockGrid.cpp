@@ -15,26 +15,21 @@ ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 
 	// Create static mesh component
 	ScoreText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreText0"));
-	ScoreText->SetRelativeLocation(FVector(200.f,0.f,0.f));
+	ScoreText->SetRelativeLocation(FVector(-1000.f,-1000.f,-1000.f));
 	ScoreText->SetRelativeRotation(FRotator(90.f,0.f,0.f));
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Score: {0}"), FText::AsNumber(0)));
 	ScoreText->SetupAttachment(DummyRoot);
 
 	// Set defaults
-	Size = 3;
-	BlockSpacing = 300.f;
+	Size = 30;
+	BlockSpacing = 70.f;
 }
 
 
 void ACube_TheBattleMasterBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
-<<<<<<< HEAD
 
-=======
-	//Get a player cube
-	GetWorld()->SpawnActor<APlayer_Cube>(FVector(0,0,0), FRotator(0, 0, 0));
->>>>>>> parent of 881ec9e... Server client block making
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;
 

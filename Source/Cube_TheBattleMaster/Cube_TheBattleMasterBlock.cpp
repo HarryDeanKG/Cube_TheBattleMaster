@@ -34,11 +34,11 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	// Create static mesh component
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh0"));
 	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
-	BlockMesh->SetRelativeScale3D(FVector(1.f,1.f,0.25f));
+	BlockMesh->SetRelativeScale3D(FVector(0.25f,0.25f,0.25f));
 	BlockMesh->SetRelativeLocation(FVector(0.f,0.f,25.f));
 	BlockMesh->SetMaterial(0, ConstructorStatics.BlueMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
-	BlockMesh->OnClicked.AddDynamic(this, &ACube_TheBattleMasterBlock::BlockClicked);
+	//BlockMesh->OnClicked.AddDynamic(this, &ACube_TheBattleMasterBlock::BlockClicked);
 
 
 	// Save a pointer to the orange material
@@ -47,10 +47,10 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
 }
 
-void ACube_TheBattleMasterBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked)
-{
-	HandleClicked();
-}
+//void ACube_TheBattleMasterBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked)
+//{
+//	HandleClicked();
+//}
 
 
 
@@ -75,11 +75,11 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 			OwningGrid->AddScore();
 		}
 		
-		for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
-			
-				PlayerCube->Movement(BlockPosition);
-			
-		}
+		//for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
+		//	
+		//		PlayerCube->Movement(BlockPosition);
+		//	
+		//}
 	}
 }
 

@@ -2,41 +2,36 @@
 
 #include "Cube_TheBattleMasterPawn.h"
 #include "Cube_TheBattleMasterBlock.h"
-<<<<<<< HEAD
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPlayerController.h"
-=======
-
->>>>>>> parent of 881ec9e... Server client block making
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
-<<<<<<< HEAD
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 #include "UObject/UObjectIterator.h"
-=======
->>>>>>> parent of 881ec9e... Server client block making
+
 
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
-<<<<<<< HEAD
-
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
 	//SetReplicates(true);
+
+
 }
 
 void ACube_TheBattleMasterPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//SetCube();
-=======
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	//SetCube(this);
+
+	/*AutoPossessPlayer = EAutoReceiveInput::Player0;*/
 	
->>>>>>> parent of 881ec9e... Server client block making
+	
 }
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
@@ -67,64 +62,78 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 }
 
 
-<<<<<<< HEAD
-void ACube_TheBattleMasterPawn::SetCube()
-{
-	//if (Role < ROLE_Authority) {
-	//	Server_SetCube();
-	//}
-	//if (MyCube == nullptr) {
-	ACube_TheBattleMasterPlayerController* DummyControler = Cast<ACube_TheBattleMasterPlayerController>(GetController());
-	DummyControler->MakeCube();
-	MyCube = Cast<APlayer_Cube>(DummyControler->CubeArray.Last());
-	MyCube->SetOwner(this);
-	MyCube->Owner2 = this;
 
-	
-	for (TObjectIterator<APlayer_Cube> Cubes; Cubes; ++Cubes) {
-		if (Cubes->GetOwner() == nullptr) { Cubes->Destroy(); }
-	}
-
-
-	//}
-}
-
-//
-//bool ACube_TheBattleMasterPawn::Server_SetCube_Validate() {
-//	
-//	return false;
-//}
-//
-//void ACube_TheBattleMasterPawn::Server_SetCube_Implementation()
-//{
-//	SetCube();
-//}
-
-
-
-void ACube_TheBattleMasterPawn::TriggerClick()
+void ACube_TheBattleMasterPawn::SetCube(ACube_TheBattleMasterPawn* Test)
 {
 	if (Role < ROLE_Authority) {
-		Server_TriggerClick();
+		Server_SetCube(Test);
 	}
-	if (CurrentBlockFocus)
-	{
-		CurrentBlockFocus->HandleClicked();
-		if (MyCube != nullptr) { MyCube->Movement(CurrentBlockFocus->BlockPosition); }
-		else { SetCube(); }
-		UE_LOG(LogTemp, Warning, TEXT("hit"))
-		
-=======
-void ACube_TheBattleMasterPawn::TriggerClick()
-{
-	if (CurrentBlockFocus)
-	{
-		CurrentBlockFocus->HandleClicked();
->>>>>>> parent of 881ec9e... Server client block making
+	else {
+
+		if (Test->MyCube == nullptr) {
+
+			Test->MyCube = GetWorld()->SpawnActor<APlayer_Cube>(FVector(0, 0, 0), FRotator(0, 0, 0));
+			Test->MyCube->SetOwner(this);
+			Test->MyCube->Owner2 = this;
+
+			/*for (TObjectIterator<APlayer_Cube> Cubes; Cubes; ++Cubes) {
+				if (Cubes->GetOwner() == nullptr) { Cubes->Destroy(); }
+			}*/
+			
+			//auto Camera = Test->MyCube->GetCamera();
+			
+
+
+			// Find the actor that handles control for the local player.
+			
+			APlayerController* OurPlayerController = UGameplayStatics::GetPlayerController(this, 0);
+			if (OurPlayerController)
+			{
+				if ((OurPlayerController->GetViewTarget() != MyCube) && (MyCube != nullptr))
+				{
+					// Cut instantly to camera one.
+					OurPlayerController->SetViewTargetWithBlend(MyCube);
+				}
+			}
+		}
 	}
 	
-
 }
+
+
+bool ACube_TheBattleMasterPawn::Server_SetCube_Validate(ACube_TheBattleMasterPawn* Test) {
+	if (Test->MyCube == nullptr){
+		return true;
+	}
+	return false;
+}
+
+void ACube_TheBattleMasterPawn::Server_SetCube_Implementation(ACube_TheBattleMasterPawn* Test){ SetCube(Test); }
+
+
+
+void ACube_TheBattleMasterPawn::TriggerClick()
+{
+	//if (Role < ROLE_Authority) {
+	//	Server_TriggerClick();
+	//}
+	//SetCube();
+	if (CurrentBlockFocus)
+	{
+		
+		CurrentBlockFocus->HandleClicked();
+		//MyCube->Movement(CurrentBlockFocus->BlockPosition);
+		
+		if (MyCube != nullptr) { 
+			MyCube->Movement(CurrentBlockFocus->BlockPosition); 
+			
+		}
+		else { SetCube(this); }
+		//UE_LOG(LogTemp, Warning, TEXT("hit"))
+	}
+}
+
+
 
 void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
 {
@@ -156,4 +165,11 @@ void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVecto
 		CurrentBlockFocus->Highlight(false);
 		CurrentBlockFocus = nullptr;
 	}
+}
+
+
+void ACube_TheBattleMasterPawn::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACube_TheBattleMasterPawn, MyCube);
 }
