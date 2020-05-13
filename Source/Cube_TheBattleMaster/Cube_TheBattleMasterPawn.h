@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Player_Cube.h"
+#include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
 
 UCLASS(config=Game)
@@ -14,7 +15,7 @@ class ACube_TheBattleMasterPawn : public APawn
 
 public:
 
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -22,10 +23,21 @@ public:
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
+	void CameraMove(APlayer_Cube * Cube);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SetCube(ACube_TheBattleMasterPawn* Test);
 
 	void SetCube(ACube_TheBattleMasterPawn* Test);
+
+	//UPROPERTY(EditAnyWhere)
+	//FVector2D Vec_test;
+
+	////UPROPERTY(EditAnyWhere)
+	////FVector TheTest;
+
+	//UPROPERTY(EditAnyWhere)
+	//ACube_TheBattleMasterBlock* aaa;
 
 protected:
 
@@ -34,9 +46,7 @@ protected:
 	//UFUNCTION(Server, Reliable, WithValidation)
 	//void Server_TriggerClick();
 
-	
 	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
-
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
@@ -44,4 +54,5 @@ protected:
 	UPROPERTY(Replicated, EditAnyWhere)
 	APlayer_Cube* MyCube;
 
+	
 };

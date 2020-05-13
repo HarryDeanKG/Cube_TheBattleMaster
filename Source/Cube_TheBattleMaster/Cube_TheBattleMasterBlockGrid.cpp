@@ -39,12 +39,18 @@ void ACube_TheBattleMasterBlockGrid::BeginPlay()
 		const float XOffset = (BlockIndex/Size) * BlockSpacing; // Divide by dimension
 		const float YOffset = (BlockIndex%Size) * BlockSpacing; // Modulo gives remainder
 
+		const float X = floor(BlockIndex/30);
+		const float Y = BlockIndex % Size;
+
 		// Make position vector, offset from Grid location
 		const FVector BlockLocation = FVector(XOffset, YOffset, 0.f) + GetActorLocation();
 
 		// Spawn a block
 		ACube_TheBattleMasterBlock* NewBlock = GetWorld()->SpawnActor<ACube_TheBattleMasterBlock>(BlockLocation, FRotator(0,0,0));
-
+		NewBlock->Coordinates = FVector2D(X, Y);
+		
+		Grid.Add(FVector2D(X, Y), NewBlock);
+		GridReference.Add(BlockLocation, FVector2D(X, Y));
 		// Tell the block about its owner
 		if (NewBlock != nullptr)
 		{

@@ -38,8 +38,20 @@ public:
 	UPROPERTY()
 	class UMaterial* BaseMaterial;
 
+
 	UPROPERTY(EditAnywhere)
-	AActor* Owner2;
+	float Base_Health = 100.0;
+
+	UPROPERTY(EditAnywhere)
+	float Base_Speed = 4.0;
+
+	UPROPERTY(EditAnywhere)
+	float Base_Damage = 10.0;
+
+	UPROPERTY(EditAnywhere)
+	float Base_Armour = 1.0;
+
+
 
 protected:
 	UPROPERTY(EditAnywhere)

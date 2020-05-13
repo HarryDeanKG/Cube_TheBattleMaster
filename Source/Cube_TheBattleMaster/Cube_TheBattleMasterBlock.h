@@ -53,6 +53,11 @@ public:
 
 	FVector BlockPosition;
 
+	FVector2D Coordinates;
+
+	bool bOccupied = false;
+	bool bMove = false;
+
 public:
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterBlockGrid.generated.h"
 
 /** Class used to spawn blocks and manage score */
@@ -33,6 +34,12 @@ public:
 	/** Spacing of blocks */
 	UPROPERTY(Category=Grid, EditAnywhere, BlueprintReadOnly)
 	float BlockSpacing;
+
+	UPROPERTY(Category = Grid, EditAnywhere)
+	TMap<FVector2D, ACube_TheBattleMasterBlock *> Grid;
+	
+	UPROPERTY(Category = Grid, EditAnywhere)
+	TMap<FVector, FVector2D> GridReference;
 
 protected:
 	// Begin AActor interface

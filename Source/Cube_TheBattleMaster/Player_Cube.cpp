@@ -55,7 +55,7 @@ APlayer_Cube::APlayer_Cube()
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 
 	//Extra (none nessessary) variables
-	Owner2 = GetOwner();
+	
 }
 
 
