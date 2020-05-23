@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Cube_TheBattleMasterBlock.h"
 #include "Player_Cube.generated.h"
 
 UCLASS()
@@ -25,7 +26,7 @@ public:
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
-
+	virtual void BeginPlay() override;
 
 	UFUNCTION(Reliable, Server, WithValidation)
 	void Server_Movement(FVector MovePosition);
@@ -39,11 +40,13 @@ public:
 	class UMaterial* BaseMaterial;
 
 
+
+	/* All the base variables */
 	UPROPERTY(EditAnywhere)
 	float Base_Health = 100.0;
 
 	UPROPERTY(EditAnywhere)
-	float Base_Speed = 4.0;
+	int32 Base_Speed=4;
 
 	UPROPERTY(EditAnywhere)
 	float Base_Damage = 10.0;
@@ -51,7 +54,18 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Base_Armour = 1.0;
 
+	/* Replicated variables */
 
+	UPROPERTY(Replicated)
+	float Replicated_Health;
+
+	UPROPERTY(Replicated, EditAnywhere)
+	int32 Replicated_Speed;
+
+	UPROPERTY(EditAnywhere)
+	ACube_TheBattleMasterBlock* BlockOwner;
+
+	
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -63,8 +77,6 @@ public:
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
-
-	/** Returns BlockMesh subobject **/
+	/** Returns Camera subobject **/
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
-
 };

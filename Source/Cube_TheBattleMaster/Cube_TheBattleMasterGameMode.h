@@ -14,6 +14,9 @@ class ACube_TheBattleMasterGameMode : public AGameModeBase
 
 public:
 	ACube_TheBattleMasterGameMode();
+	
+	void EndGameCondition();
+
 };
 
 

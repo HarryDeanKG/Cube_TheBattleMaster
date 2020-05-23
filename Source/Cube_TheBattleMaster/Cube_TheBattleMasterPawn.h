@@ -13,6 +13,14 @@ class ACube_TheBattleMasterPawn : public APawn
 {
 	GENERATED_UCLASS_BODY()
 
+	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USceneComponent* DummyRoot;
+
+    //Camera componenet
+	UPROPERTY(EditAnywhere)
+	USpringArmComponent* OurCameraSpringArm;
+	UCameraComponent* OurCamera;
+
 public:
 
 	//virtual void BeginPlay() override;
@@ -23,7 +31,7 @@ public:
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
-	void CameraMove(APlayer_Cube * Cube);
+	void CameraMove(AActor * Cube);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SetCube(ACube_TheBattleMasterPawn* Test);
@@ -39,12 +47,26 @@ public:
 	//UPROPERTY(EditAnyWhere)
 	//ACube_TheBattleMasterBlock* aaa;
 
+	bool bDead = false;
+
 protected:
 
+	void ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon);
+
+	UFUNCTION(Reliable, Server)
+	void Server_ToggleOccupied(ACube_TheBattleMasterBlock * Block, bool Bon);
+
+	void HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
+
+	UFUNCTION(Reliable, Server)
+	void Server_HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
+	
 	void TriggerClick();
 
-	//UFUNCTION(Server, Reliable, WithValidation)
-	//void Server_TriggerClick();
+	
+
+	/*UFUNCTION(Client, Reliable)
+	void Client_TriggerClick();*/
 
 	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
 
@@ -54,5 +76,15 @@ protected:
 	UPROPERTY(Replicated, EditAnyWhere)
 	APlayer_Cube* MyCube;
 
+	void DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube);
+
+	//bool IsInVacinity();
+
+	void CubeDestroy();
+
+	UFUNCTION(Reliable, Server)
+	void Server_CubeDestroy();
 	
+	/** Returns Camera subobject **/
+	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
 };

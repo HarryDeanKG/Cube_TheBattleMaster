@@ -38,6 +38,14 @@ public:
 	UPROPERTY()
 	class UMaterialInstance* OrangeMaterial;
 
+	/** Pointer to red material used on active blocks */
+	UPROPERTY()
+	class UMaterialInstance* RedMaterial;
+
+	/** Pointer to red material used on active blocks */
+	UPROPERTY()
+	class UMaterialInstance* YellowMaterial;
+
 	/** Grid that owns us */
 	UPROPERTY()
 	class ACube_TheBattleMasterBlockGrid* OwningGrid;
@@ -51,11 +59,20 @@ public:
 
 	void Highlight(bool bOn);
 
+	void CanMove(bool bOn);
+
+	void ToggleOccupied(bool bOn);
+
+	//UFUNCTION(Server, Reliable)
+	//void Server_ToggleOccupied(bool bOn);
+
 	FVector BlockPosition;
 
 	FVector2D Coordinates;
 
-	bool bOccupied = false;
+	UPROPERTY(Replicated)
+	bool bIsOccupied = false;
+
 	bool bMove = false;
 
 public:

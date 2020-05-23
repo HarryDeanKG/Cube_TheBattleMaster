@@ -3,6 +3,7 @@
 #include "Cube_TheBattleMasterPawn.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterBlockGrid.h"
+#include "Cube_TheBattleMasterGameMode.h"
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPlayerController.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -21,7 +22,21 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
 	//SetReplicates(true);
 
+	//Set up a dummy root system
+	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
+	RootComponent = DummyRoot;
 
+
+		//Create camera components
+	OurCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
+	OurCameraSpringArm->SetupAttachment(DummyRoot);
+	//OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(200.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
+	OurCameraSpringArm->TargetArmLength = 400.f;
+	OurCameraSpringArm->bEnableCameraLag = true;
+	OurCameraSpringArm->CameraLagSpeed = 3.0f;
+
+	OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
+	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 }
 
 //void ACube_TheBattleMasterPawn::BeginPlay()
@@ -53,23 +68,24 @@ void ACube_TheBattleMasterPawn::SetupPlayerInputComponent(UInputComponent* Playe
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("TriggerClick", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::TriggerClick);
+	PlayerInputComponent->BindAction("Destroy", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::CubeDestroy);
 }
 
 void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
 {
 	Super::CalcCamera(DeltaTime, OutResult);
 
-	OutResult.Rotation = FRotator(-90.0f, -90.0f, 0.0f);
+	OutResult.Rotation = FRotator(-90.0f, 0.0f, 0.0f);
 }
 
-void ACube_TheBattleMasterPawn::CameraMove(APlayer_Cube* Cube) {
+void ACube_TheBattleMasterPawn::CameraMove(AActor* dummyActor) {
 	//make sure owner is not null then because owner is a player controller just cast it
 	if (GetOwner()) {
 		APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
-		if ((OurPlayerController->GetViewTarget() != Cube) && (Cube != nullptr))
+		if ((OurPlayerController->GetViewTarget() != dummyActor) && (dummyActor != nullptr))
 		{
 			// Cut instantly to cube camera.
-			OurPlayerController->SetViewTargetWithBlend(Cube, 0.75f);
+			OurPlayerController->SetViewTargetWithBlend(dummyActor, 0.75f);
 		}
 	}
 }
@@ -98,45 +114,132 @@ bool ACube_TheBattleMasterPawn::Server_SetCube_Validate(ACube_TheBattleMasterPaw
 
 void ACube_TheBattleMasterPawn::Server_SetCube_Implementation(ACube_TheBattleMasterPawn* Pawn){ SetCube(Pawn); }
 
-void ACube_TheBattleMasterPawn::TriggerClick()
-{
-	//if (Role < ROLE_Authority) {
-	//	Server_TriggerClick();
-	//}
-	if (CurrentBlockFocus)
+void ACube_TheBattleMasterPawn::ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon) {
+	if (Role < ROLE_Authority)
 	{
-		CurrentBlockFocus->HandleClicked();
-		ACube_TheBattleMasterBlockGrid* BlockGrid;
-		FVector2D Grid_Location;
-		if (MyCube != nullptr) { 
-			MyCube->Movement(CurrentBlockFocus->BlockPosition); 
-			
-			//UE_LOG(LogTemp, Warning, TEXT("Cube Position2: %s"), *TheTest.ToString());
-			for (TObjectIterator<ACube_TheBattleMasterBlockGrid> test; test; ++test) 
-			{
-				Grid_Location = test->GridReference.FindRef(MyCube->GetActorLocation());
-				//UE_LOG(LogTemp, Warning, TEXT("%s"), *test->GetName()); 
-				//UE_LOG(LogTemp, Warning, TEXT("Cube actor location on block grid: %s"), *Vec_test.ToString());
+		Server_ToggleOccupied(Block, Bon);
+	}
+	Block->bIsOccupied = Bon;
+	Block->ToggleOccupied(Bon);
+}
 
-				//break;
-				BlockGrid = *test;
+void ACube_TheBattleMasterPawn::Server_ToggleOccupied_Implementation(ACube_TheBattleMasterBlock* Block, bool Bon) { ToggleOccupied(Block, Bon); }
+
+void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove) {
+	
+	APlayer_Cube* ThisCube = Pawn->MyCube;
+	ACube_TheBattleMasterBlockGrid* BlockGrid;
+	ACube_TheBattleMasterBlockGrid* DummyGrid;
+	FVector2D Grid_Location;
+	int32 size;
+	if (Role < ROLE_Authority) {
+		Server_HighlightMoveOptions(Pawn, Block, Bmove);
+	}
+	else {
+		if (ThisCube != nullptr) {
+			FString StopLoop = GetName();
+			StopLoop.RemoveAt(0, GetName().Len()-1);
+			int32 Stoploop = FCString::Atoi(*StopLoop);
+			int32 i = 0;
+			for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid; Grid; ++Grid) {
+				DummyGrid = *Grid;
+				Grid_Location = DummyGrid->GridReference.FindRef(ThisCube->GetActorLocation());
+				size = DummyGrid->Size;
+				if (i != 0) { DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(Block->GetTargetLocation()))->ToggleOccupied(Bmove); }
+				if (i == Stoploop+1) { BlockGrid = *Grid; }
+				i++;
 			}
-
-			
-			UE_LOG(LogTemp, Warning, TEXT("Grid_Location: %s"), *Grid_Location.ToString());
-			ACube_TheBattleMasterBlock* SelectedBlock = BlockGrid->Grid.FindRef(Grid_Location);
-			SelectedBlock->bOccupied = true;
-			UE_LOG(LogTemp, Warning, TEXT("Block name on grid: %s"), *SelectedBlock->GetName());
-			
-			for (int32 X = Grid_Location.X-4; X < Grid_Location.X+4; X++) {
-				for (int32 Y = Grid_Location.Y - 4; Y < Grid_Location.Y + 4; Y++) {
-					BlockGrid->Grid.FindRef(Grid_Location)->bMove = true;
+			for (int32 X = Grid_Location.X - ThisCube->Base_Speed; X <= Grid_Location.X + ThisCube->Base_Speed; X++) {
+				for (int32 Y = Grid_Location.Y - ThisCube->Base_Speed; Y <= Grid_Location.Y + ThisCube->Base_Speed; Y++) {
+					if (BlockGrid->Grid.Contains(FVector2D(X, Y))) {
+						if (FVector2D(X, Y)==BlockGrid->GridReference.FindRef(Block->GetTargetLocation())) { //ToggleOccupied(Block, Bmove);
+						}
+						else { BlockGrid->Grid.FindRef(FVector2D(X, Y))->CanMove(Bmove); }
+					}
 				}
 			}
-			
+		}
+	}
+}
+
+void ACube_TheBattleMasterPawn::Server_HighlightMoveOptions_Implementation(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove) { HighlightMoveOptions(Pawn, Block, Bmove); }
+
+void ACube_TheBattleMasterPawn::TriggerClick()
+{
+	if (CurrentBlockFocus && !bDead)
+	{			
+		CurrentBlockFocus->HandleClicked();
+		if (MyCube != nullptr) {
+
+			if (CurrentBlockFocus->bMove || MyCube->BlockOwner == nullptr) {
+				if (MyCube->BlockOwner != nullptr) { HighlightMoveOptions(this, MyCube->BlockOwner, false); }
+
+				MyCube->BlockOwner = CurrentBlockFocus;
+				MyCube->Movement(CurrentBlockFocus->BlockPosition);
+
+
+
+				HighlightMoveOptions(this, CurrentBlockFocus, true);
+			}
 		}
 		else { SetCube(this); }
 	}
+}
+
+
+//bool ACube_TheBattleMasterPawn::IsInVacinity() {
+//	ACube_TheBattleMasterBlockGrid* BlockGrid;
+//	
+//	FString StopLoop = GetName();
+//	StopLoop.RemoveAt(0, GetName().Len() - 1);
+//	int32 Stoploop = FCString::Atoi(*StopLoop);
+//	int32 i = 0;
+//	for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid; Grid; ++Grid) {
+//		DummyGrid = *Grid;
+//		Grid_Location = DummyGrid->GridReference.FindRef(ThisCube->GetActorLocation());
+//		size = DummyGrid->Size;
+//		if (i != 0) { DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(Block->GetTargetLocation()))->ToggleOccupied(Bmove); }
+//		if (i == Stoploop + 1) { BlockGrid = *Grid; }
+//		i++;
+//	}
+//
+//
+//	for (int32 X = Grid_Location.X - ThisCube->Base_Speed; X <= Grid_Location.X + ThisCube->Base_Speed; X++) {
+//		for (int32 Y = Grid_Location.Y - ThisCube->Base_Speed; Y <= Grid_Location.Y + ThisCube->Base_Speed; Y++) {
+//			if (BlockGrid->Grid.Contains(FVector2D(X, Y))) {
+//				if (FVector2D(X, Y) == BlockGrid->GridReference.FindRef(Block->GetTargetLocation())) { //ToggleOccupied(Block, Bmove);
+//				}
+//				else { BlockGrid->Grid.FindRef(FVector2D(X, Y))->CanMove(Bmove); }
+//			}
+//		}
+//	}
+//}
+
+void ACube_TheBattleMasterPawn::CubeDestroy() {
+	
+	if (MyCube != nullptr) {
+		CameraMove(this);
+		bDead = true;
+		MyCube->Destroy();
+		if (Role < ROLE_Authority) {
+			Server_CubeDestroy();
+		}
+		else {
+			ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
+			BaseGameMode->EndGameCondition();
+		}
+		HighlightMoveOptions(this, MyCube->BlockOwner, false);
+	}
+}
+
+void ACube_TheBattleMasterPawn::Server_CubeDestroy_Implementation() {
+	MyCube->Destroy(); 
+	ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
+	BaseGameMode->EndGameCondition();
+}
+
+void ACube_TheBattleMasterPawn::DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube) {
+	ToDamageCube->Replicated_Health -= OwnedCube->Base_Damage;
 }
 
 void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)

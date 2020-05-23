@@ -1,17 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Player_Cube.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Net/UnrealNetwork.h"
 #include "Materials/MaterialInstance.h"
-
 
 // Sets default values
 APlayer_Cube::APlayer_Cube()
 {
-
 	bReplicateMovement = true;
 	bReplicates = true;
 	
@@ -54,32 +51,31 @@ APlayer_Cube::APlayer_Cube()
 	OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 
-	//Extra (none nessessary) variables
-	
+	//Extra variables
+
+
+	//Extra (none nessessary) variables	
 }
 
+void APlayer_Cube::BeginPlay() {
+	Replicated_Health = Base_Health;
+}
 
 void APlayer_Cube::Movement(FVector MovePosition) {
-
-	if (Role < ROLE_Authority)
-	{
-		Server_Movement(MovePosition);
-		//SetActorLocation(MovePosition);
-	//	UE_LOG(LogTemp, Warning, TEXT("MOVE"));
-	}
-
+	if (Role < ROLE_Authority) { Server_Movement(MovePosition); }
 	SetActorLocation(MovePosition);
-	
-	//FVector test = GetActorLocation();
-
-	//UE_LOG(LogTemp, Warning, TEXT("Test %s"), *test.ToString());
 }
 
+bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {	return true; }
 
-bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {
-	return true;
-}
+void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) { Movement(MovePosition); }
 
-void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) {
-	Movement(MovePosition);
+
+void APlayer_Cube::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayer_Cube, Replicated_Health);
+
+	DOREPLIFETIME(APlayer_Cube, Replicated_Speed);
+
 }
