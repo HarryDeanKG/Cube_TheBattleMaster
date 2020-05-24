@@ -52,18 +52,41 @@ APlayer_Cube::APlayer_Cube()
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 
 	//Extra variables
-
+	Base_Health = 100.0f;
+	Replicated_Health = Base_Health;
 
 	//Extra (none nessessary) variables	
 }
 
 void APlayer_Cube::BeginPlay() {
-	Replicated_Health = Base_Health;
+
+	Super::BeginPlay();
+
+	//OnTakeAnyDamage;
+
+	//OnTakeAnyDamage.AddDynamic(this, &APlayer_Cube::OnTakeAnyDamage);
+
+	/*AController* ThisPlayerContoler = Cast<AController>(this->GetOwner());
+	ApplyDamage(this, 10, ThisPlayerContoler, this, FDamageEvent());*/
+	
 }
+
+void APlayer_Cube::ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APlayer_Cube* DamageCauser)
+{
+	float Damage = BaseDamage;
+	if (Damage > 0)
+	{
+		DamagedActor->Replicated_Health = FMath::Clamp(DamagedActor->Replicated_Health - Damage, 0.0f, DamagedActor->Base_Health);
+	}
+}
+
 
 void APlayer_Cube::Movement(FVector MovePosition) {
 	if (Role < ROLE_Authority) { Server_Movement(MovePosition); }
 	SetActorLocation(MovePosition);
+
+	ApplyDamage(this, 10, this);
+	UE_LOG(LogTemp, Warning, TEXT("Testing Damage. Helth is %f"), Replicated_Health);
 }
 
 bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {	return true; }

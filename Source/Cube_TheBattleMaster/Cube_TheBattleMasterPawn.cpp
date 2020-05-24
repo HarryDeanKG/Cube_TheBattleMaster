@@ -177,8 +177,6 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 				MyCube->BlockOwner = CurrentBlockFocus;
 				MyCube->Movement(CurrentBlockFocus->BlockPosition);
 
-
-
 				HighlightMoveOptions(this, CurrentBlockFocus, true);
 			}
 		}

@@ -28,6 +28,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	
+
 	UFUNCTION(Reliable, Server, WithValidation)
 	void Server_Movement(FVector MovePosition);
 
@@ -43,7 +45,7 @@ public:
 
 	/* All the base variables */
 	UPROPERTY(EditAnywhere)
-	float Base_Health = 100.0;
+	float Base_Health;
 
 	UPROPERTY(EditAnywhere)
 	int32 Base_Speed=4;
@@ -56,7 +58,7 @@ public:
 
 	/* Replicated variables */
 
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, EditAnywhere)
 	float Replicated_Health;
 
 	UPROPERTY(Replicated, EditAnywhere)
@@ -65,7 +67,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	ACube_TheBattleMasterBlock* BlockOwner;
 
-	
+	/* GamePlay functions */
+
+	//void ApplyDamage(AActor* DamagedActor, float BaseDamage, AController* EventInstigator, AActor* DamageCauser, FDamageEvent DamageEvent);
+	void ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APlayer_Cube* DamageCauser);
 
 protected:
 	UPROPERTY(EditAnywhere)
