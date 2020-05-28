@@ -123,12 +123,13 @@ void ACube_TheBattleMasterBlock::CanMove(bool bOn)
 	}
 }
 
-void ACube_TheBattleMasterBlock::ToggleOccupied(bool bOn) 
+void ACube_TheBattleMasterBlock::ToggleOccupied(bool bOn, class APlayer_Cube* Cube)
 {
 	//if (Role < ROLE_Authority) { Server_ToggleOccupied(bOn); }
 	if (bOn) {
 		BlockMesh->SetMaterial(0, YellowMaterial);
 		bIsOccupied = true;
+		OccupyingCube = Cube;
 	}
 	else {
 		bIsOccupied = false;

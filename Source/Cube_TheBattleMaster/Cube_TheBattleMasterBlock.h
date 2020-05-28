@@ -61,7 +61,7 @@ public:
 
 	void CanMove(bool bOn);
 
-	void ToggleOccupied(bool bOn);
+	void ToggleOccupied(bool bOn, class APlayer_Cube* Cube);
 
 	//UFUNCTION(Server, Reliable)
 	//void Server_ToggleOccupied(bool bOn);
@@ -72,6 +72,8 @@ public:
 
 	UPROPERTY(Replicated)
 	bool bIsOccupied = false;
+
+	class APlayer_Cube* OccupyingCube;
 
 	bool bMove = false;
 

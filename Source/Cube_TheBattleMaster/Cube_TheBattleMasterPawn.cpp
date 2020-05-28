@@ -6,7 +6,7 @@
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPlayerController.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
@@ -16,7 +16,7 @@
 #include "UObject/UObjectIterator.h"
 
 
-ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
+ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
@@ -27,7 +27,7 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	RootComponent = DummyRoot;
 
 
-		//Create camera components
+	//Create camera components
 	OurCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
 	OurCameraSpringArm->SetupAttachment(DummyRoot);
 	//OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(200.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
@@ -39,16 +39,35 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 }
 
-//void ACube_TheBattleMasterPawn::BeginPlay()
-//{
-//	Super::BeginPlay();
-//
-//	//SetCube(this);
-//
-//	/*AutoPossessPlayer = EAutoReceiveInput::Player0;*/
-//	
-//	
-//}
+void ACube_TheBattleMasterPawn::Movement_Test()
+{
+	UE_LOG(LogTemp, Warning, TEXT("MOVE!"))
+}
+
+void ACube_TheBattleMasterPawn::Attack_Test()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ATTACK!"))
+}
+
+void ACube_TheBattleMasterPawn::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (ActionInterface != nullptr)
+	{
+		ActionInterface_Instance = CreateWidget<UUserWidget>(GetWorld(), ActionInterface);
+		if (ActionInterface_Instance != nullptr)
+		{
+			ActionInterface_Instance->AddToViewport();
+		}
+	}
+
+	//SetCube(this);
+
+	/*AutoPossessPlayer = EAutoReceiveInput::Player0;*/
+	
+	
+}
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 {
@@ -120,7 +139,7 @@ void ACube_TheBattleMasterPawn::ToggleOccupied(ACube_TheBattleMasterBlock* Block
 		Server_ToggleOccupied(Block, Bon);
 	}
 	Block->bIsOccupied = Bon;
-	Block->ToggleOccupied(Bon);
+	Block->ToggleOccupied(Bon, MyCube);
 }
 
 void ACube_TheBattleMasterPawn::Server_ToggleOccupied_Implementation(ACube_TheBattleMasterBlock* Block, bool Bon) { ToggleOccupied(Block, Bon); }
@@ -145,7 +164,7 @@ void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterPawn* 
 				DummyGrid = *Grid;
 				Grid_Location = DummyGrid->GridReference.FindRef(ThisCube->GetActorLocation());
 				size = DummyGrid->Size;
-				if (i != 0) { DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(Block->GetTargetLocation()))->ToggleOccupied(Bmove); }
+				if (i != 0) { DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(Block->GetTargetLocation()))->ToggleOccupied(Bmove, MyCube); }
 				if (i == Stoploop+1) { BlockGrid = *Grid; }
 				i++;
 			}
@@ -170,14 +189,18 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 	{			
 		CurrentBlockFocus->HandleClicked();
 		if (MyCube != nullptr) {
-
-			if (CurrentBlockFocus->bMove || MyCube->BlockOwner == nullptr) {
+			if (CurrentBlockFocus->bIsOccupied) { MyCube->ApplyDamage(CurrentBlockFocus->OccupyingCube, MyCube->Base_Damage, MyCube); }
+			else if (CurrentBlockFocus->bMove || MyCube->BlockOwner == nullptr) {
 				if (MyCube->BlockOwner != nullptr) { HighlightMoveOptions(this, MyCube->BlockOwner, false); }
 
 				MyCube->BlockOwner = CurrentBlockFocus;
 				MyCube->Movement(CurrentBlockFocus->BlockPosition);
 
 				HighlightMoveOptions(this, CurrentBlockFocus, true);
+
+
+				//MyCube->ApplyDamage(MyCube, 10, MyCube);
+				//UE_LOG(LogTemp, Warning, TEXT("Testing Damage. Helth is %f"), Replicated_Health);
 			}
 		}
 		else { SetCube(this); }
@@ -185,7 +208,7 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 }
 
 
-//bool ACube_TheBattleMasterPawn::IsInVacinity() {
+//APlayer_Cube ACube_TheBattleMasterPawn::IsInVacinity() {
 //	ACube_TheBattleMasterBlockGrid* BlockGrid;
 //	
 //	FString StopLoop = GetName();
@@ -234,10 +257,6 @@ void ACube_TheBattleMasterPawn::Server_CubeDestroy_Implementation() {
 	MyCube->Destroy(); 
 	ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
 	BaseGameMode->EndGameCondition();
-}
-
-void ACube_TheBattleMasterPawn::DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube) {
-	ToDamageCube->Replicated_Health -= OwnedCube->Base_Damage;
 }
 
 void ACube_TheBattleMasterPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
