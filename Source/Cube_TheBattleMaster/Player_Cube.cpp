@@ -84,6 +84,9 @@ void APlayer_Cube::ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APl
 void APlayer_Cube::Movement(FVector MovePosition) {
 	if (Role < ROLE_Authority) { Server_Movement(MovePosition); }
 	SetActorLocation(MovePosition);
+
+	ApplyDamage(this, 10, this);
+	UE_LOG(LogTemp, Warning, TEXT("Testing Damage. Helth is %f"), Replicated_Health);
 }
 
 bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {	return true; }
