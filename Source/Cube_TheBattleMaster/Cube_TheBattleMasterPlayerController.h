@@ -15,7 +15,14 @@ class ACube_TheBattleMasterPlayerController : public APlayerController
 public:
 	ACube_TheBattleMasterPlayerController();
 
+	virtual void BeginPlay() override;
 
+	//WidgetComponents
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<class UUserWidget> ActionInterface;
+
+	UPROPERTY()
+	class UUserWidget* ActionInterface_Instance;
 };
 
 

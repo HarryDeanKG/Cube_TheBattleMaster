@@ -14,6 +14,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UObjectIterator.h"
+#include "Misc/OutputDeviceNull.h"
+
 
 
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer)
@@ -41,6 +43,7 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 
 void ACube_TheBattleMasterPawn::Movement_Test()
 {
+	HighlightMoveOptions(this, MyCube->BlockOwner, true);
 	UE_LOG(LogTemp, Warning, TEXT("MOVE!"))
 }
 
@@ -49,7 +52,7 @@ void ACube_TheBattleMasterPawn::Attack_Test()
 	UE_LOG(LogTemp, Warning, TEXT("ATTACK!"))
 }
 
-void ACube_TheBattleMasterPawn::BeginPlay()
+/*void ACube_TheBattleMasterPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -64,10 +67,8 @@ void ACube_TheBattleMasterPawn::BeginPlay()
 
 	//SetCube(this);
 
-	/*AutoPossessPlayer = EAutoReceiveInput::Player0;*/
-	
-	
-}
+	//AutoPossessPlayer = EAutoReceiveInput::Player0;
+}*/	
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 {
@@ -195,8 +196,10 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 
 				MyCube->BlockOwner = CurrentBlockFocus;
 				MyCube->Movement(CurrentBlockFocus->BlockPosition);
-
-				HighlightMoveOptions(this, CurrentBlockFocus, true);
+				
+				
+				this->Reset_Buttons();
+				//HighlightMoveOptions(this, CurrentBlockFocus, true);
 
 
 				//MyCube->ApplyDamage(MyCube, 10, MyCube);
@@ -251,6 +254,16 @@ void ACube_TheBattleMasterPawn::CubeDestroy() {
 		}
 		HighlightMoveOptions(this, MyCube->BlockOwner, false);
 	}
+}
+
+void ACube_TheBattleMasterPawn::Reset_Buttons()
+{
+	/*Empty*/
+	
+	
+	/*FOutputDeviceNull ar;
+	GetLevel()->CallFunctionByNameWithArguments(TEXT("ResetButtons"), ar, NULL, true);*/
+
 }
 
 void ACube_TheBattleMasterPawn::Server_CubeDestroy_Implementation() {

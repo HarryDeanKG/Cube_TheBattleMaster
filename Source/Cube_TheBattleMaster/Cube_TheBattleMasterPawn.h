@@ -21,12 +21,7 @@ class ACube_TheBattleMasterPawn : public APawn
 	USpringArmComponent* OurCameraSpringArm;
 	UCameraComponent* OurCamera;
 	
-	//WidgetComponents
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<class UUserWidget> ActionInterface;
 
-	UPROPERTY()
-	class UUserWidget* ActionInterface_Instance;
 	
 	//Block properties
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
@@ -39,7 +34,7 @@ class ACube_TheBattleMasterPawn : public APawn
 
 public:
 
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -97,7 +92,13 @@ protected:
 
 	UFUNCTION(Reliable, Server)
 	void Server_CubeDestroy();
-	
+
 	/** Returns Camera subobject **/
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
+
+public:
+	/*Just a dummy functiont to reset the variables*/
+	UFUNCTION(BlueprintImplementableEvent)
+	void Reset_Buttons();
+
 };
