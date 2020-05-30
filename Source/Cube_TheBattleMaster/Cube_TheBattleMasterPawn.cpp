@@ -18,7 +18,10 @@
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 =======
 >>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
@@ -44,6 +47,7 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 void ACube_TheBattleMasterPawn::Movement_Test()
@@ -77,6 +81,8 @@ void ACube_TheBattleMasterPawn::Attack_Test()
 =======
 =======
 >>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
+=======
+>>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 //void ACube_TheBattleMasterPawn::BeginPlay()
 //{
 //	Super::BeginPlay();
@@ -88,6 +94,9 @@ void ACube_TheBattleMasterPawn::Attack_Test()
 //	
 //}
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
+=======
 >>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 =======
 >>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
@@ -220,6 +229,7 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 				MyCube->Movement(CurrentBlockFocus->BlockPosition);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 				
 				
 				this->Reset_Buttons();
@@ -228,6 +238,10 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 
 				//MyCube->ApplyDamage(MyCube, 10, MyCube);
 				//UE_LOG(LogTemp, Warning, TEXT("Testing Damage. Helth is %f"), Replicated_Health);
+=======
+
+				HighlightMoveOptions(this, CurrentBlockFocus, true);
+>>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 =======
 
 				HighlightMoveOptions(this, CurrentBlockFocus, true);

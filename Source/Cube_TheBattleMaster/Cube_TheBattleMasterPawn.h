@@ -22,6 +22,7 @@ class ACube_TheBattleMasterPawn : public APawn
 	UCameraComponent* OurCamera;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	
 
 	
@@ -33,6 +34,8 @@ class ACube_TheBattleMasterPawn : public APawn
 	APlayer_Cube* MyCube;
 
 	bool bDead = false;
+=======
+>>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 =======
 >>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 =======
