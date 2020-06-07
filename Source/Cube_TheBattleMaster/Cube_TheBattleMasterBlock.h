@@ -63,6 +63,8 @@ public:
 
 	void ToggleOccupied(bool bOn);
 
+	
+
 	//UFUNCTION(Server, Reliable)
 	//void Server_ToggleOccupied(bool bOn);
 

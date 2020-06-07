@@ -16,14 +16,6 @@
 #include "UObject/UObjectIterator.h"
 #include "Misc/OutputDeviceNull.h"
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
@@ -35,7 +27,7 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	RootComponent = DummyRoot;
 
 
-		//Create camera components
+	//Create camera components
 	OurCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
 	OurCameraSpringArm->SetupAttachment(DummyRoot);
 	//OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(200.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
@@ -45,15 +37,18 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 
 	OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
+
+	CamSpeed = 300.0f;
+	
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 void ACube_TheBattleMasterPawn::Movement_Test()
 {
-	HighlightMoveOptions(this, MyCube->BlockOwner, true);
-	UE_LOG(LogTemp, Warning, TEXT("MOVE!"))
+	if (!bReady) {
+		HighlightMoveOptions(this, MyCube->BlockOwner, true);
+		UE_LOG(LogTemp, Warning, TEXT("MOVE!"))
+	}
 }
 
 void ACube_TheBattleMasterPawn::Attack_Test()
@@ -78,28 +73,7 @@ void ACube_TheBattleMasterPawn::Attack_Test()
 
 	//AutoPossessPlayer = EAutoReceiveInput::Player0;
 }*/	
-=======
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-//void ACube_TheBattleMasterPawn::BeginPlay()
-//{
-//	Super::BeginPlay();
-//
-//	//SetCube(this);
-//
-//	/*AutoPossessPlayer = EAutoReceiveInput::Player0;*/
-//	
-//	
-//}
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
+
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 {
@@ -120,6 +94,65 @@ void ACube_TheBattleMasterPawn::SetupPlayerInputComponent(UInputComponent* Playe
 
 	PlayerInputComponent->BindAction("TriggerClick", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::TriggerClick);
 	PlayerInputComponent->BindAction("Destroy", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::CubeDestroy);
+	// bind movement axes
+	PlayerInputComponent->BindAxis(TEXT("Forward"), this, &ACube_TheBattleMasterPawn::OnMoveForward);
+	PlayerInputComponent->BindAxis(TEXT("Right"), this, &ACube_TheBattleMasterPawn::OnMoveRight);
+
+}
+
+void ACube_TheBattleMasterPawn::OnMoveForward(float value)
+{
+	if (value != 0.0f)
+	{
+		float deltaTime = GetWorld()->GetDeltaSeconds();
+		if (GetOwner()) {
+			APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
+
+			auto dummyActor = OurPlayerController->GetViewTarget();
+
+			FVector CurrentLocation = dummyActor->GetActorLocation();
+			dummyActor->SetActorLocation(CurrentLocation + FVector(CamSpeed*value * deltaTime, 0.f, 0.f));
+			//FVector CurrentLocation = OurCameraSpringArm->AddRelativeLocation();
+			//OurCameraSpringArm->SetWorldLocation(FVector(CamSpeed*value * deltaTime, 0.f, 0.f));
+
+		}
+	}
+}
+
+void ACube_TheBattleMasterPawn::OnMoveRight(float value)
+{
+	if (value != 0.0f)
+	{
+		// we move perpendicular to the controller view direction
+		const FRotator rot = GetControlRotation();
+		const FVector dir = FRotationMatrix(rot).GetScaledAxis(EAxis::Y);
+
+		float deltaTime = GetWorld()->GetDeltaSeconds();
+
+		//UE_LOG(LogTemp, Warning, TEXT("CameraLocation: %s"), *GetCamera()->GetRelativeLocation().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Movement: %f"), value);
+		//OurCamera->SetRelativeLocation(CameraLocation+FVector(CamSpeed * value * deltaTime, 0, 0));
+		
+		//UE_LOG(LogTemp, Warning, TEXT("CameraLocation: %s"), *OurCamera->GetComponentLocation().ToString());
+		if (GetOwner()) {
+			APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
+			
+			auto dummyActor = OurPlayerController->GetViewTarget();
+
+			FVector CurrentLocation = dummyActor->GetActorLocation();
+			dummyActor->SetActorLocation(CurrentLocation+FVector(0.f, CamSpeed*value * deltaTime, 0.f));
+		}
+		
+	}
+}
+
+void ACube_TheBattleMasterPawn::Movement(FVector dummyPosition) {
+	if (MyCube) { MyCube->Movement(dummyPosition); }
+	if (GetOwner()) {
+		APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
+		auto dummyActor = OurPlayerController->GetViewTarget();
+		dummyActor->SetActorLocation(FVector(dummyPosition.X, dummyPosition.Y, dummyActor->GetActorLocation().Z));
+	}
 }
 
 void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
@@ -129,29 +162,19 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 	OutResult.Rotation = FRotator(-90.0f, 0.0f, 0.0f);
 }
 
-void ACube_TheBattleMasterPawn::CameraMove(AActor* dummyActor) {
-	//make sure owner is not null then because owner is a player controller just cast it
-	if (GetOwner()) {
-		APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
-		if ((OurPlayerController->GetViewTarget() != dummyActor) && (dummyActor != nullptr))
-		{
-			// Cut instantly to cube camera.
-			OurPlayerController->SetViewTargetWithBlend(dummyActor, 0.75f);
-		}
-	}
-}
-
 void ACube_TheBattleMasterPawn::SetCube(ACube_TheBattleMasterPawn* Pawn)
 {
-	if (Role < ROLE_Authority) {
+	if (GetLocalRole() < ROLE_Authority) {
 		Server_SetCube(Pawn);
 	}
 	else {
 		if (Pawn->MyCube == nullptr) {
-			Pawn->MyCube = GetWorld()->SpawnActor<APlayer_Cube>(FVector(0, 0, 0), FRotator(0, 0, 0));
+			FVector Position = FVector(1000, 500, 0);
+			Pawn->MyCube = GetWorld()->SpawnActor<APlayer_Cube>(Position, FRotator(0, 0, 0));
 			Pawn->MyCube->SetOwner(this);
 
-			CameraMove(Pawn->MyCube);
+			//TODO This sets the cube as movement so check if pawn is selected then move
+			
 		}
 	}
 }
@@ -166,7 +189,7 @@ bool ACube_TheBattleMasterPawn::Server_SetCube_Validate(ACube_TheBattleMasterPaw
 void ACube_TheBattleMasterPawn::Server_SetCube_Implementation(ACube_TheBattleMasterPawn* Pawn){ SetCube(Pawn); }
 
 void ACube_TheBattleMasterPawn::ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon) {
-	if (Role < ROLE_Authority)
+	if (GetLocalRole() < ROLE_Authority)
 	{
 		Server_ToggleOccupied(Block, Bon);
 	}
@@ -183,7 +206,7 @@ void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterPawn* 
 	ACube_TheBattleMasterBlockGrid* DummyGrid;
 	FVector2D Grid_Location;
 	int32 size;
-	if (Role < ROLE_Authority) {
+	if (GetLocalRole() < ROLE_Authority) {
 		Server_HighlightMoveOptions(Pawn, Block, Bmove);
 	}
 	else {
@@ -215,6 +238,8 @@ void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterPawn* 
 
 void ACube_TheBattleMasterPawn::Server_HighlightMoveOptions_Implementation(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove) { HighlightMoveOptions(Pawn, Block, Bmove); }
 
+
+
 void ACube_TheBattleMasterPawn::TriggerClick()
 {
 	if (CurrentBlockFocus && !bDead)
@@ -222,40 +247,46 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 		CurrentBlockFocus->HandleClicked();
 		if (MyCube != nullptr) {
 
-			if (CurrentBlockFocus->bMove || MyCube->BlockOwner == nullptr) {
-				if (MyCube->BlockOwner != nullptr) { HighlightMoveOptions(this, MyCube->BlockOwner, false); }
+			if (CurrentBlockFocus->bMove && !bReady) {
+				//if (MyCube->BlockOwner != nullptr) { HighlightMoveOptions(this, MyCube->BlockOwner, false); }
 
 				MyCube->BlockOwner = CurrentBlockFocus;
-				MyCube->Movement(CurrentBlockFocus->BlockPosition);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-				
-				
-				this->Reset_Buttons();
-				//HighlightMoveOptions(this, CurrentBlockFocus, true);
+				//MyCube->Movement(CurrentBlockFocus->BlockPosition);
+				//SetActorLocation(CurrentBlockFocus->BlockPosition);
+				Movement(CurrentBlockFocus->BlockPosition);
+				Turn();
 
+				//if (CurrentBlockFocus->bMove) { CurrentBlockFocus->Highlight(false); }
+				//if (!CurrentBlockFocus->bIsOccupied) { CurrentBlockFocus->ToggleOccupied(true); }
+
+				CurrentBlockFocus->ToggleOccupied(true);
+				CurrentBlockFocus->CanMove(false);
+				CurrentBlockFocus->ToggleOccupied(true);
+				UE_LOG(LogTemp, Warning, TEXT("Testing"))
+				//this->BP_ResetButtons();
+
+				//HighlightMoveOptions(this, CurrentBlockFocus, true);
 
 				//MyCube->ApplyDamage(MyCube, 10, MyCube);
 				//UE_LOG(LogTemp, Warning, TEXT("Testing Damage. Helth is %f"), Replicated_Health);
-=======
-
-				HighlightMoveOptions(this, CurrentBlockFocus, true);
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
-
-				HighlightMoveOptions(this, CurrentBlockFocus, true);
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
-
-				HighlightMoveOptions(this, CurrentBlockFocus, true);
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
 			}
 		}
 		else { SetCube(this); }
 	}
 }
 
+void ACube_TheBattleMasterPawn::Turn()
+{
+	if (GetLocalRole() < ROLE_Authority) { Server_Turn(); }
+	else {
+		ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
+		BaseGameMode->TakeTurn();
+	}
+	
+	bReady = true;
+}
+
+void ACube_TheBattleMasterPawn::Server_Turn_Implementation() { Turn(); }
 
 //bool ACube_TheBattleMasterPawn::IsInVacinity() {
 //	ACube_TheBattleMasterBlockGrid* BlockGrid;
@@ -288,10 +319,10 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 void ACube_TheBattleMasterPawn::CubeDestroy() {
 	
 	if (MyCube != nullptr) {
-		CameraMove(this);
+		
 		bDead = true;
 		MyCube->Destroy();
-		if (Role < ROLE_Authority) {
+		if (GetLocalRole() < ROLE_Authority) {
 			Server_CubeDestroy();
 		}
 		else {
@@ -301,16 +332,15 @@ void ACube_TheBattleMasterPawn::CubeDestroy() {
 		HighlightMoveOptions(this, MyCube->BlockOwner, false);
 	}
 }
-
-void ACube_TheBattleMasterPawn::Reset_Buttons()
-{
-	/*Empty*/
-	
-	
-	/*FOutputDeviceNull ar;
-	GetLevel()->CallFunctionByNameWithArguments(TEXT("ResetButtons"), ar, NULL, true);*/
-
-}
+//
+//void ACube_TheBattleMasterPawn::BP_ResetButtons_Implementation()
+//{
+//	/*Empty*/
+//	
+//	/*FOutputDeviceNull ar;
+//	GetLevel()->CallFunctionByNameWithArguments(TEXT("ResetButtons"), ar, NULL, true);*/
+//	UE_LOG(LogTemp, Warning, TEXT("Reset!"));
+//}
 
 void ACube_TheBattleMasterPawn::Server_CubeDestroy_Implementation() {
 	MyCube->Destroy(); 

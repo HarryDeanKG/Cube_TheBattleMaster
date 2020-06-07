@@ -137,6 +137,8 @@ void ACube_TheBattleMasterBlock::ToggleOccupied(bool bOn)
 	}
 }
 
+
+
 //void ACube_TheBattleMasterBlock::Server_ToggleOccupied_Implementation(bool bOn) { ToggleOccupied(bOn); }
 
 void ACube_TheBattleMasterBlock::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const

@@ -20,12 +20,15 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(EditAnywhere)
 	USpringArmComponent* OurCameraSpringArm;
 	UCameraComponent* OurCamera;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-	
 
-	
+	float CamSpeed;
+
+	// move the camera forward
+	void OnMoveForward(float value);
+
+	// move the camera right
+	void OnMoveRight(float value);
+
 	//Block properties
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
@@ -34,16 +37,18 @@ class ACube_TheBattleMasterPawn : public APawn
 	APlayer_Cube* MyCube;
 
 	bool bDead = false;
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
-=======
->>>>>>> parent of 375cd1d... Buttons buttons who got the buttons
+	bool bReady = false;
 
 public:
 
 	//virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
+	void Movement_Test();
+
+	UFUNCTION(BlueprintCallable)
+
+	void Attack_Test();
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -51,23 +56,12 @@ public:
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
-	void CameraMove(AActor * Cube);
+	FVector2D CameraInput;
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SetCube(ACube_TheBattleMasterPawn* Test);
 
 	void SetCube(ACube_TheBattleMasterPawn* Test);
-
-	//UPROPERTY(EditAnyWhere)
-	//FVector2D Vec_test;
-
-	////UPROPERTY(EditAnyWhere)
-	////FVector TheTest;
-
-	//UPROPERTY(EditAnyWhere)
-	//ACube_TheBattleMasterBlock* aaa;
-
-	bool bDead = false;
 
 protected:
 
@@ -81,20 +75,19 @@ protected:
 	UFUNCTION(Reliable, Server)
 	void Server_HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
 	
+	void Movement(FVector dummyPosition);
+
 	void TriggerClick();
 
-	
+	void Turn();
+
+	UFUNCTION(Reliable, Server)
+	void Server_Turn();
 
 	/*UFUNCTION(Client, Reliable)
 	void Client_TriggerClick();*/
 
 	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
-	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
-
-	UPROPERTY(Replicated, EditAnyWhere)
-	APlayer_Cube* MyCube;
 
 	void DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube);
 
@@ -110,7 +103,8 @@ protected:
 
 public:
 	/*Just a dummy functiont to reset the variables*/
-	UFUNCTION(BlueprintImplementableEvent)
-	void Reset_Buttons();
-
+	
+	/*UFUNCTION(BlueprintImplementableEvent)
+	void BP_ResetButtons();*/
+	//void BP_ResetButtons_Implementation();
 };

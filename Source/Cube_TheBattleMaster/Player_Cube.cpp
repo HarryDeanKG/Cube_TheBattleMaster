@@ -9,7 +9,8 @@
 // Sets default values
 APlayer_Cube::APlayer_Cube()
 {
-	bReplicateMovement = true;
+	SetReplicatingMovement(true);
+	//bReplicateMovement = true;
 	bReplicates = true;
 	
 	// Structure to hold one-time initialization
@@ -43,7 +44,7 @@ APlayer_Cube::APlayer_Cube()
 	//Create camera components
 	OurCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
 	OurCameraSpringArm->SetupAttachment(DummyRoot);
-	OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 2200.0f), FRotator(-90.0f, 0.0f, 0.0f));
+	OurCameraSpringArm->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 1800.0f), FRotator(-90.0f, 0.0f, 0.0f));
 	OurCameraSpringArm->TargetArmLength = 400.f;
 	OurCameraSpringArm->bEnableCameraLag = true;
 	OurCameraSpringArm->CameraLagSpeed = 3.0f;
@@ -82,7 +83,7 @@ void APlayer_Cube::ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APl
 
 
 void APlayer_Cube::Movement(FVector MovePosition) {
-	if (Role < ROLE_Authority) { Server_Movement(MovePosition); }
+	if (GetLocalRole() < ROLE_Authority) { Server_Movement(MovePosition); }
 	SetActorLocation(MovePosition);
 
 	ApplyDamage(this, 10, this);
