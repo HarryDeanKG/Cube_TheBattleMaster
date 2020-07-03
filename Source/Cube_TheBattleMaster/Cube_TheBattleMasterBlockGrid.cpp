@@ -60,9 +60,11 @@ void ACube_TheBattleMasterBlockGrid::BeginPlay()
 		{
 			NewBlock->OwningGrid = this;
 			NewBlock->BlockPosition = BlockLocation;
-			for (FVector2D DummyPosition : StartPositions) {
-				if (DummyPosition == FVector2D(X, Y)) { NewBlock ->CanMove(true); }
-			}
+
+			/*For highlighting the starting positions, but this needs to be up to the pawn to call in the "start game"*/
+			//for (FVector2D DummyPosition : StartPositions) {
+			//	if (DummyPosition == FVector2D(X, Y)) { NewBlock ->CanMove(true); }
+			//}
 		}
 	}
 }

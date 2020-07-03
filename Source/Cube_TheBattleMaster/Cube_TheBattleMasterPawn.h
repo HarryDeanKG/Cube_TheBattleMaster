@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterBlock.h"
+#include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
 
 UCLASS(config=Game)
@@ -29,6 +30,8 @@ class ACube_TheBattleMasterPawn : public APawn
 	// move the camera right
 	void OnMoveRight(float value);
 
+	void OnMoveIn(float value);
+
 	//Block properties
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
@@ -39,22 +42,45 @@ class ACube_TheBattleMasterPawn : public APawn
 	bool bDead = false;
 	bool bReady = false;
 
+	int32 ActionNumb;
+	/*List of Actions to undertake*/
+	UPROPERTY(BlueprintReadWrite)
+	TMap<int32, FString> M_Action;
+
+	/*Called to initiate what action is to be done*/
+	void DoAction(int32 int_Action);
+
+	void DoMove(FString Position, int32 MoveNumb);
+
+	ACube_TheBattleMasterBlockGrid* GetGrid();
+
+	ACube_TheBattleMasterGameMode* GameMode;
+
+	UFUNCTION(Server, Reliable)
+	void Server_TheGameMode();
+
 public:
 
 	//virtual void BeginPlay() override;
+
 
 	UFUNCTION(BlueprintCallable)
 	void Movement_Test();
 
 	UFUNCTION(BlueprintCallable)
-
 	void Attack_Test();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ActionSelected();
+
+	void SetAction(FString ActionName);
 
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
+
 
 	FVector2D CameraInput;
 
@@ -72,6 +98,8 @@ protected:
 
 	void HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
 
+	void TheGameMode();
+
 	UFUNCTION(Reliable, Server)
 	void Server_HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
 	
@@ -79,6 +107,7 @@ protected:
 
 	void TriggerClick();
 
+	UFUNCTION(BlueprintCallable)
 	void Turn();
 
 	UFUNCTION(Reliable, Server)

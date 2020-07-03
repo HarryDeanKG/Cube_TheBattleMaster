@@ -13,21 +13,41 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 	// use our own player controller class
 	PlayerControllerClass = ACube_TheBattleMasterPlayerController::StaticClass();
 
+	//E_GameSectionEnum = EGameSection::GS_StartSection;
+	E_GameSectionEnum = EGameSection::GS_MidSection;
 	Game_turn = 200;
 }
 
+void ACube_TheBattleMasterGameMode::BeginPlay() {
+	
+	for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
+		Pawn->SetCube(*Pawn);
+	}
+}
 
 void ACube_TheBattleMasterGameMode::TakeTurn()
 {
 	if (Game_turn < 1){/* End Game*/ }
 	Players_Ready += 1;
 	if (Players_Ready == GetNumPlayers()) { 
+		if (E_GameSectionEnum == EGameSection::GS_StartSection) { E_GameSectionEnum = EGameSection::GS_MidSection; }
+		E_TurnStateEnum = ETurnState::TS_InitiateActions;
 		Game_turn -= 1; 
 		Players_Ready = 0; 
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {	PlayerPawn->bReady=false; }
+		DoSetActions();
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->bReady = false; PlayerPawn->M_Action.Empty(); PlayerPawn->ActionNumb = 0; }
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Game turn: %d"), Game_turn);
 	UE_LOG(LogTemp, Warning, TEXT("Player ready: %d"), Players_Ready);
+}
+
+void ACube_TheBattleMasterGameMode::DoSetActions()
+{
+	for (int32 itr = 0; itr < 4; ++itr) {
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->DoAction(itr); }
+	}
+	/*Check actions are complete*/
+	E_TurnStateEnum = ETurnState::TS_PreSelection;
 }
 
 void ACube_TheBattleMasterGameMode::EndGameCondition()

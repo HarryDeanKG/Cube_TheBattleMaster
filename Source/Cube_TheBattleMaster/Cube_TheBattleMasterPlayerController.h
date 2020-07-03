@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPlayerController.generated.h"
 
 /** PlayerController class used to enable cursor */
@@ -15,6 +16,11 @@ class ACube_TheBattleMasterPlayerController : public APlayerController
 public:
 	ACube_TheBattleMasterPlayerController();
 
+	ACube_TheBattleMasterGameMode* GetGameMode();
+
+	EGameSection GetGameModeSection();
+
+	void ToggleGameModeSection(FString GameModeString);
 	//virtual void BeginPlay() override;
 
 	//WidgetComponents
