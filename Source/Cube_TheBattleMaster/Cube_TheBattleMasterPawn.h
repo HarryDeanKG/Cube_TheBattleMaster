@@ -30,6 +30,7 @@ class ACube_TheBattleMasterPawn : public APawn
 	// move the camera right
 	void OnMoveRight(float value);
 
+	//move camera in
 	void OnMoveIn(float value);
 
 	//Block properties
@@ -43,12 +44,20 @@ class ACube_TheBattleMasterPawn : public APawn
 	bool bReady = false;
 
 	int32 ActionNumb;
+	int32 DoActionNumb;
+
 	/*List of Actions to undertake*/
 	UPROPERTY(BlueprintReadWrite)
-	TMap<int32, FString> M_Action;
+	TMap<int32, FString> M_Action_Name;
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<int32, FVector> M_Action_Pos;
+
+	UPROPERTY()
+	ACube_TheBattleMasterBlock* StartingBlock;
 
 	/*Called to initiate what action is to be done*/
-	void DoAction(int32 int_Action);
+	void DoAction();
 
 	void DoMove(FString Position, int32 MoveNumb);
 
@@ -65,15 +74,19 @@ public:
 
 
 	UFUNCTION(BlueprintCallable)
-	void Movement_Test();
+	void Movement_Test(bool bToggle);
 
 	UFUNCTION(BlueprintCallable)
 	void Attack_Test();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void ActionSelected();
+	void Reset_Buttons_test();
 
-	void SetAction(FString ActionName);
+	void SetAction(FString ActionName, FVector DummyPosition);
+
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	//void ActionSelected(bool bTest);
+	
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -89,6 +102,9 @@ public:
 
 	void SetCube(ACube_TheBattleMasterPawn* Test);
 
+	void Movement(FVector dummyPosition);
+
+	void ResetEverything();
 protected:
 
 	void ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon);
@@ -103,12 +119,17 @@ protected:
 	UFUNCTION(Reliable, Server)
 	void Server_HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
 	
-	void Movement(FVector dummyPosition);
+
 
 	void TriggerClick();
 
+	void MoveCube(ACube_TheBattleMasterBlock * Block, bool bAction);
+
+
 	UFUNCTION(BlueprintCallable)
 	void Turn();
+
+
 
 	UFUNCTION(Reliable, Server)
 	void Server_Turn();
@@ -126,6 +147,8 @@ protected:
 
 	UFUNCTION(Reliable, Server)
 	void Server_CubeDestroy();
+
+
 
 	/** Returns Camera subobject **/
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }

@@ -38,11 +38,12 @@ public:
 public:
 	ACube_TheBattleMasterGameMode();
 
+	UPROPERTY()
+	TSubclassOf<class ACube_TheBattleMasterPawn> Starting_Pawn;
+
 	void BeginPlay() override;
 	
 	void TakeTurn();
-
-	void DoSetActions();
 
 	void EndGameCondition();
 

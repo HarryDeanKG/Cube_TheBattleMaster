@@ -5,11 +5,20 @@
 #include "UObject/UObjectIterator.h"
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPawn.h"
+#include "UObject/ConstructorHelpers.h"
 
 ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 {
 	// no pawn by default
-	DefaultPawnClass = ACube_TheBattleMasterPawn::StaticClass();
+	//DefaultPawnClass = ACube_TheBattleMasterPawn::StaticClass();
+
+	//FIND THE GOD DAMN BLUEPRINT FUCK!!!!
+	UClass* MyPawnBlueprintClass;
+
+	static ConstructorHelpers::FClassFinder<APawn> MyPawnFinder(TEXT("/Game/BP_Classes/BP_Pawn"));
+	MyPawnBlueprintClass = (UClass*)MyPawnFinder.Class;
+
+	DefaultPawnClass = MyPawnBlueprintClass;
 	// use our own player controller class
 	PlayerControllerClass = ACube_TheBattleMasterPlayerController::StaticClass();
 
@@ -34,21 +43,13 @@ void ACube_TheBattleMasterGameMode::TakeTurn()
 		E_TurnStateEnum = ETurnState::TS_InitiateActions;
 		Game_turn -= 1; 
 		Players_Ready = 0; 
-		DoSetActions();
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->bReady = false; PlayerPawn->M_Action.Empty(); PlayerPawn->ActionNumb = 0; }
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {PlayerPawn->ResetEverything();}
+		E_TurnStateEnum = ETurnState::TS_PreSelection;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Game turn: %d"), Game_turn);
 	UE_LOG(LogTemp, Warning, TEXT("Player ready: %d"), Players_Ready);
 }
 
-void ACube_TheBattleMasterGameMode::DoSetActions()
-{
-	for (int32 itr = 0; itr < 4; ++itr) {
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->DoAction(itr); }
-	}
-	/*Check actions are complete*/
-	E_TurnStateEnum = ETurnState::TS_PreSelection;
-}
 
 void ACube_TheBattleMasterGameMode::EndGameCondition()
 {
