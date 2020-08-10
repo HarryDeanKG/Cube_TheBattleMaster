@@ -61,6 +61,8 @@ public:
 
 	void CanMove(bool bOn);
 
+	void CanAttack(bool bOn);
+
 	void ToggleOccupied(bool bOn);
 
 	
@@ -76,6 +78,8 @@ public:
 	bool bIsOccupied = false;
 
 	bool bMove = false;
+
+	bool bAttack = false;
 
 public:
 	/** Returns DummyRoot subobject **/

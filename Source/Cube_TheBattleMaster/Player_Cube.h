@@ -7,6 +7,10 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Cube_TheBattleMasterBlock.h"
+#include "Cube_TheBattleMasterGameMode.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "Cube_TheBattleMasterPlayerController.h"
 #include "Player_Cube.generated.h"
 
 UCLASS()
@@ -26,16 +30,32 @@ public:
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
-	
+	ETurnState E_TurnStateEnum;
+	virtual void OnConstruction(const FTransform & Transform) override;
 
-	UFUNCTION(Reliable, Server, WithValidation)
+	virtual void Tick(float DeltaSeconds) override;
+
+	float time = 0.0f;
+	float ActionTimer = 5.0f;
+	bool bDoAction = false;
+
+	bool bMove=false;
+	bool bHasMoved = false;
+	FVector StartPosition = FVector(0.0f);
+	FVector CurrentPosition;
+	FVector FinalPosition;
+	UFUNCTION(Reliable, Server)
 	void Server_Movement(FVector MovePosition);
 
 	//Called by Server movement and vicaversa
+	ACube_TheBattleMasterPawn* MyPawn;
+	void SetOwningPawn(ACube_TheBattleMasterPawn * NewOwner);
 
 	void Movement(FVector MovePosition);
+
+	ACube_TheBattleMasterGameMode* BaseGameMode;
 
 	/** Pointer to white material used on the focused block */
 	UPROPERTY()
@@ -49,6 +69,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	int32 Base_Speed=4;
+
+	UPROPERTY(EditAnywhere)
+	int32 AttackRange = 7;
 
 	UPROPERTY(EditAnywhere)
 	float Base_Damage = 10.0;
@@ -70,7 +93,9 @@ public:
 	/* GamePlay functions */
 
 	//void ApplyDamage(AActor* DamagedActor, float BaseDamage, AController* EventInstigator, AActor* DamageCauser, FDamageEvent DamageEvent);
-	void ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APlayer_Cube* DamageCauser);
+	//void ApplyDamage(APlayer_Cube* DamagedActor, float BaseDamage, APlayer_Cube* DamageCauser);
+	UFUNCTION()
+	void ApplyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 protected:
 	UPROPERTY(EditAnywhere)

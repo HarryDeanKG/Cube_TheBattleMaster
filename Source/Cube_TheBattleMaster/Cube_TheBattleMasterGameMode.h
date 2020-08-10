@@ -12,7 +12,8 @@ enum class ETurnState : uint8
 {
 	TS_PreSelection 	UMETA(DisplayName = "PreSelection"),
 	TS_SelectActions 	UMETA(DisplayName = "SelectActions"),
-	TS_InitiateActions	UMETA(DisplayName = "InitiateActions")
+	TS_InitiateActions	UMETA(DisplayName = "InitiateActions"),
+	TS_WaitAction		UMETA(DisplayName = "WaitAction")
 };
 
 UENUM(BlueprintType)
@@ -40,10 +41,19 @@ public:
 
 	UPROPERTY()
 	TSubclassOf<class ACube_TheBattleMasterPawn> Starting_Pawn;
-
-	void BeginPlay() override;
 	
+	//void BeginPlay() override;
+	
+	bool bDoActions;
+	bool bNextTurn;
+	int doAction = 0;
+	virtual void Tick(float DeltaSeconds) override;
+
 	void TakeTurn();
+
+	//FTimerHandle UnusedHandle;
+	//void TimerElapsed();
+
 
 	void EndGameCondition();
 

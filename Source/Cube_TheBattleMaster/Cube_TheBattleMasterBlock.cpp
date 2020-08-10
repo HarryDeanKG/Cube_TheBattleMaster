@@ -51,6 +51,8 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	RedMaterial = ConstructorStatics.RedMaterial.Get();
 	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
 	YellowMaterial = ConstructorStatics.YellowMaterial.Get();
+
+
 }
 
 void ACube_TheBattleMasterBlock::HandleClicked()
@@ -97,6 +99,10 @@ void ACube_TheBattleMasterBlock::Highlight(bool bOn)
 	{
 		BlockMesh->SetMaterial(0, RedMaterial);
 	}
+	else if (bAttack)
+	{
+		BlockMesh->SetMaterial(0, OrangeMaterial);
+	}
 	else
 	{
 		BlockMesh->SetMaterial(0, BlueMaterial);
@@ -121,6 +127,12 @@ void ACube_TheBattleMasterBlock::CanMove(bool bOn)
 		BlockMesh->SetMaterial(0, BlueMaterial);
 		bMove = false;
 	}
+}
+
+void ACube_TheBattleMasterBlock::CanAttack(bool bOn)
+{
+	if (bOn) { bAttack = true; BlockMesh->SetMaterial(0, OrangeMaterial);}
+	else { bAttack = false; BlockMesh->SetMaterial(0, BlueMaterial);}
 }
 
 void ACube_TheBattleMasterBlock::ToggleOccupied(bool bOn) 

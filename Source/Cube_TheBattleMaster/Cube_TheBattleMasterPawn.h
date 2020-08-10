@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Player_Cube.h"
+#include "SmallMunition.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
+
+class ASmallMunitionBase;
 
 UCLASS(config=Game)
 class ACube_TheBattleMasterPawn : public APawn
@@ -23,6 +26,7 @@ class ACube_TheBattleMasterPawn : public APawn
 	UCameraComponent* OurCamera;
 
 	float CamSpeed;
+	float MoveSpeed;
 
 	// move the camera forward
 	void OnMoveForward(float value);
@@ -37,8 +41,13 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
 
-	UPROPERTY(Replicated, EditAnyWhere)
-	APlayer_Cube* MyCube;
+	//UPROPERTY(Replicated, EditAnyWhere)
+	//APlayer_Cube* MyCube;
+
+	UFUNCTION() void OnRep_MyCuben();
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyCuben)
+	class APlayer_Cube* MyCube;
+
 
 	bool bDead = false;
 	bool bReady = false;
@@ -54,14 +63,29 @@ class ACube_TheBattleMasterPawn : public APawn
 	TMap<int32, FVector> M_Action_Pos;
 
 	UPROPERTY()
+	TMap<FString, FString> M_PossibleActions;
+
+	UPROPERTY(EditAnyWhere)
 	ACube_TheBattleMasterBlock* StartingBlock;
 
 	/*Called to initiate what action is to be done*/
-	void DoAction();
+	void DoAction(int int_Action);
 
-	void DoMove(FString Position, int32 MoveNumb);
+	void AttackAction(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction);
 
+	UFUNCTION(Server, Reliable)
+	void Server_AttackAction(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction);
+
+
+	void Test();
+
+
+	UFUNCTION()
 	ACube_TheBattleMasterBlockGrid* GetGrid();
+
+
+	ACube_TheBattleMasterBlockGrid* MyGrid;
+
 
 	ACube_TheBattleMasterGameMode* GameMode;
 
@@ -70,22 +94,45 @@ class ACube_TheBattleMasterPawn : public APawn
 
 public:
 
-	//virtual void BeginPlay() override;
+	/*Attack Section*/
+	UFUNCTION(BlueprintCallable)
+	void Attack_Test(bool bToggle);
 
+	//FVector AttackDirection = FVector(0,0,0);
+
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	//TSubclassOf<ASmallMunitionBase> SmallMunitionClass;
 
 	UFUNCTION(BlueprintCallable)
 	void Movement_Test(bool bToggle);
 
-	UFUNCTION(BlueprintCallable)
-	void Attack_Test();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void Reset_Buttons_test();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Ready_Button();
+
+	void ResetEverything();
+	FString String_Action;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Cancel_Button();
+
 	void SetAction(FString ActionName, FVector DummyPosition);
 
-	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	//void ActionSelected(bool bTest);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ActionSelected();
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void Confirm_Actions();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CubeMade();
+
+
+	//virtual void BeginPlay() override;
+
 	
 
 	virtual void Tick(float DeltaSeconds) override;
@@ -97,14 +144,15 @@ public:
 
 	FVector2D CameraInput;
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SetCube(ACube_TheBattleMasterPawn* Test);
+//	UFUNCTION(Server, Reliable, WithValidation)
 
-	void SetCube(ACube_TheBattleMasterPawn* Test);
+	UFUNCTION(Server, Reliable)
+	void Server_SetCube(ACube_TheBattleMasterPawn* Test, ACube_TheBattleMasterBlock * Block);
+
+	void SetCube(ACube_TheBattleMasterPawn * Pawn, ACube_TheBattleMasterBlock * Block);
 
 	void Movement(FVector dummyPosition);
 
-	void ResetEverything();
 protected:
 
 	void ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon);
@@ -112,18 +160,30 @@ protected:
 	UFUNCTION(Reliable, Server)
 	void Server_ToggleOccupied(ACube_TheBattleMasterBlock * Block, bool Bon);
 
-	void HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
+	void HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
+
+	UFUNCTION(Reliable, Server)
+	void Server_HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
+	
+	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle);
+
+	UFUNCTION(Reliable, Server)
+	void Server_HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle);
+
+	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle);
+
 
 	void TheGameMode();
 
-	UFUNCTION(Reliable, Server)
-	void Server_HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove);
+
 	
 
 
 	void TriggerClick();
 
 	void MoveCube(ACube_TheBattleMasterBlock * Block, bool bAction);
+
+
 
 
 	UFUNCTION(BlueprintCallable)

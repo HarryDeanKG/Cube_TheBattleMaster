@@ -5,10 +5,12 @@
 #include "Cube_TheBattleMasterBlockGrid.h"
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Player_Cube.h"
+#include "SmallMunition.h"
 #include "Cube_TheBattleMasterPlayerController.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -39,67 +41,62 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
 
 	CamSpeed = 800.0f;
+	MoveSpeed = 100.0f;
 	ActionNumb = 0;
 	DoActionNumb = 0;
+
+	M_PossibleActions.Add("Missles", "Attack");
+	M_PossibleActions.Add("Short Attack", "Attack");
+
+	M_PossibleActions.Add("Attack Drones", "Drone");
+	M_PossibleActions.Add("Mine Drones", "Drone");
+
+	M_PossibleActions.Add("Gas", "Utility");
+	M_PossibleActions.Add("Shield", "Utility");
 
 }
 
 /*TODO: send actions to an action function, these are just to talk with blueprint*/
 void ACube_TheBattleMasterPawn::Movement_Test(bool bToggle)
 {
-	HighlightMoveOptions(this, MyCube->BlockOwner, bToggle);
-	//this->ActionSelected(true);
-	
-	UE_LOG(LogTemp, Warning, TEXT("MOVE!"));
-	//SetAction("Movement", MyCube->BlockOwner->BlockPosition);
+	if (MyCube) { HighlightMoveOptions(MyCube->BlockOwner, bToggle); }
 }
 
-void ACube_TheBattleMasterPawn::Attack_Test()
+void ACube_TheBattleMasterPawn::Attack_Test(bool bToggle)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ATTACK!"));
-	//SetAction("Attack", MyCube->BlockOwner->BlockPosition);
-	SetAction("Attack", FVector(0,0,0));
+	if (MyCube) { HighlightAttackOptions(MyCube->BlockOwner, bToggle); }
+
 }
 
 
-
-void ACube_TheBattleMasterPawn::SetAction(FString ActionName, FVector DummyPosition) {
-	//auto GameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
-	// && GameMode->E_GameSectionEnum == EGameSection::GS_MidSection
-	
-	if (!bReady) {
-		M_Action_Name.Add(ActionNumb, ActionName);
-		M_Action_Pos.Add(ActionNumb, DummyPosition);
-		ActionNumb++;
-		if (ActionNumb == 4) { Turn(); }
-	}UE_LOG(LogTemp, Warning, TEXT("Recorded Actions: %d"), ActionNumb);
-	UE_LOG(LogTemp, Warning, TEXT("Ready? Actions: %s"), bReady? TEXT("true"): TEXT("false"));
+void ACube_TheBattleMasterPawn::Confirm_Actions_Implementation()
+{
+	bReady = !bReady;
+	if (StartingBlock) { MoveCube(StartingBlock, false); }
 	
 }
 //
-//void ACube_TheBattleMasterPawn::ActionSelected_Implementation(bool bTest)
+void ACube_TheBattleMasterPawn::ActionSelected_Implementation(){}
+
+//void ACube_TheBattleMasterPawn::BeginPlay()
 //{
-//	
-//	UE_LOG(LogTemp, Warning, TEXT("Default: %s"), bTest?TEXT("True"):TEXT("False"));
+//	Super::BeginPlay();
+
+
+//	//if (ActionInterface != nullptr)
+//	//{
+//	//	ActionInterface_Instance = CreateWidget<UUserWidget>(GetWorld(), ActionInterface);
+//	//	if (ActionInterface_Instance != nullptr)
+//	//	{
+//	//		ActionInterface_Instance->AddToViewport();
+//	//	}
+//	//}
+//
+//	SetCube(this);
+//
+//	//AutoPossessPlayer = EAutoReceiveInput::Player0;
 //}
 
-/*void ACube_TheBattleMasterPawn::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (ActionInterface != nullptr)
-	{
-		ActionInterface_Instance = CreateWidget<UUserWidget>(GetWorld(), ActionInterface);
-		if (ActionInterface_Instance != nullptr)
-		{
-			ActionInterface_Instance->AddToViewport();
-		}
-	}
-
-	//SetCube(this);
-
-	//AutoPossessPlayer = EAutoReceiveInput::Player0;
-}*/	
 
 
 void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
@@ -125,7 +122,20 @@ void ACube_TheBattleMasterPawn::SetupPlayerInputComponent(UInputComponent* Playe
 	PlayerInputComponent->BindAxis(TEXT("Forward"), this, &ACube_TheBattleMasterPawn::OnMoveForward);
 	PlayerInputComponent->BindAxis(TEXT("Right"), this, &ACube_TheBattleMasterPawn::OnMoveRight);
 	PlayerInputComponent->BindAxis(TEXT("Inward"), this, &ACube_TheBattleMasterPawn::OnMoveIn);
+
+	//space bar for quick test events
+	PlayerInputComponent->BindAction("Test", EInputEvent::IE_Pressed, this, &ACube_TheBattleMasterPawn::Test);
 }
+
+void ACube_TheBattleMasterPawn::Test() 
+{ 
+	UE_LOG(LogTemp, Warning, TEXT("TEST activated")); 
+
+	//for (TObjectIterator<APlayer_Cube> DummyCube; DummyCube; ++DummyCube) { MyCube->bMove = true;  DummyCube->FinalPosition = FVector(0.f);  MyCube->E_TurnStateEnum = ETurnState::TS_InitiateActions; }
+	
+}
+
+
 
 /*Camera Movement*/
 void ACube_TheBattleMasterPawn::OnMoveForward(float value)
@@ -188,15 +198,44 @@ void ACube_TheBattleMasterPawn::OnMoveIn(float value)
 	}
 }
 
+void ACube_TheBattleMasterPawn::OnRep_MyCuben()
+{
+	if (MyCube) {
+		MyCube->SetOwningPawn(this);
+	}
+}
+
 /*Movement function and move the camera to the cube*/
 void ACube_TheBattleMasterPawn::Movement(FVector dummyPosition) {
-	if (MyCube) { MyCube->Movement(dummyPosition); }
 	if (GetOwner()) {
 		APlayerController* OurPlayerController = Cast<APlayerController>(GetOwner());
 		auto dummyActor = OurPlayerController->GetViewTarget();
 		dummyActor->SetActorLocation(FVector(dummyPosition.X, dummyPosition.Y, dummyActor->GetActorLocation().Z));
 	}
 }
+
+void ACube_TheBattleMasterPawn::MoveCube(ACube_TheBattleMasterBlock* Block, bool bAction) {
+
+	ACube_TheBattleMasterBlock* PreviousBlock;
+	if (MyCube->BlockOwner) { PreviousBlock = MyCube->BlockOwner; }
+	else { PreviousBlock = GetGrid()->Grid.FindRef(GetGrid()->GridReference.FindRef(MyCube->GetActorLocation())); }
+	MyCube->BlockOwner = Block;
+
+	if (!StartingBlock) { StartingBlock = PreviousBlock; }
+
+	//ToggleOccupied(Block, false);
+	if (PreviousBlock) { HighlightMoveOptions(PreviousBlock, false); }
+	Block->CanMove(false);
+
+	MyCube->bMove = true;
+	//MyCube->bDoAction = true;
+	Movement(Block->GetActorLocation());
+
+	
+	if (bAction) { SetAction("Movement", Block->BlockPosition - PreviousBlock->BlockPosition); }
+	else { MyCube->StartPosition = MyCube->GetActorLocation(); }
+}
+
 
 void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
 {
@@ -205,55 +244,99 @@ void ACube_TheBattleMasterPawn::CalcCamera(float DeltaTime, struct FMinimalViewI
 	OutResult.Rotation = FRotator(-90.0f, 0.0f, 0.0f);
 }
 
-void ACube_TheBattleMasterPawn::DoAction()
-{
-	FString String_Action = "Empty";
 
-	for (int32 int_Action = 0; int_Action < ActionNumb; int_Action++) 
-	{
-		if (M_Action_Name.Contains(int_Action) && M_Action_Pos.Contains(int_Action)) {
-			String_Action = M_Action_Name[int_Action];
+void ACube_TheBattleMasterPawn::SetAction(FString ActionName, FVector DummyPosition) {
+	//auto GameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
+	// && GameMode->E_GameSectionEnum == EGameSection::GS_MidSection
+
+	if (!bReady) {
+		M_Action_Name.Add(ActionNumb, ActionName);
+		M_Action_Pos.Add(ActionNumb, DummyPosition);
+		ActionNumb++;
+		ActionSelected();
+		if (ActionNumb == 4) { Confirm_Actions(); }
+	}/*UE_LOG(LogTemp, Warning, TEXT("Recorded Actions: %d"), ActionNumb);
+	UE_LOG(LogTemp, Warning, TEXT("Ready? Actions: %s"), bReady? TEXT("true"): TEXT("false"));*/
+
+}
+
+void ACube_TheBattleMasterPawn::DoAction(int int_Action)
+{
+	MyCube->SetReplicatingMovement(true);
+
+	String_Action = "Empty";
+
+	if (M_Action_Name.Contains(int_Action) && M_Action_Pos.Contains(int_Action)) {
+		String_Action = M_Action_Name[int_Action];
+	}
+	if (String_Action == "Movement") {
+		ACube_TheBattleMasterBlockGrid* DummyGrid = GetGrid();
+		ACube_TheBattleMasterBlock* DummyBlock = DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(MyCube->GetActorLocation() + M_Action_Pos[int_Action]));
+		if (DummyGrid->GridReference.Contains(MyCube->GetActorLocation() + M_Action_Pos[int_Action])) {
+			MoveCube(DummyBlock, false);
 		}
-		if (String_Action == "Movement") { 
-			ACube_TheBattleMasterBlockGrid* DummyGrid = GetGrid();
-			ACube_TheBattleMasterBlock* DummyBlock = DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(MyCube->GetActorLocation() + M_Action_Pos[int_Action]));
-			//UE_LOG(LogTemp, Warning, TEXT("%s Block exist? %s"), *(MyCube->GetActorLocation() + M_Action_Pos[int_Action]).ToString(),(DummyGrid->GridReference.Contains(MyCube->GetActorLocation() + M_Action_Pos[int_Action]) ? TEXT("True"):TEXT("False")));
-			if (DummyGrid->GridReference.Contains(MyCube->GetActorLocation() + M_Action_Pos[int_Action])) {
-				MoveCube(DummyBlock, false);
-			}
-			//Movement(GetActorLocation() + M_Action_Pos[int_Action]); 
-		}
-		else if (String_Action == "Attack") { DoDamage(this->MyCube, this->MyCube); }
-		else {/*Do Nothing*/ }
-		//UE_LOG(LogTemp, Warning, TEXT("No %d: %s"), int_Action, *String_Action);
-		UE_LOG(LogTemp, Warning, TEXT("Do Action:%s Position: %s"), *String_Action,*(MyCube->GetActorLocation()).ToString());
+	//	//Movement(GetActorLocation() + M_Action_Pos[int_Action]); 
+	}
+	else if (String_Action == "Attack") { AttackAction(this, M_Action_Pos[int_Action], false); }
+	else {/*Do Nothing*/ }
+	UE_LOG(LogTemp, Warning, TEXT("Do Action: %s Position: %s"), *String_Action,*(M_Action_Pos[int_Action]).ToString());
+	MyCube->bDoAction = true;
+
+}
+
+void ACube_TheBattleMasterPawn::AttackAction(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction)
+{
+	if (!bReady){
+		//const FRotator SpawnRotation = GetControlRotation();
+		const FRotator SpawnRotation = FRotator(0, 0, 0);
+
+		const FVector SpawnLocation = MyCube->GetActorLocation() ;
+
+		ASmallMunition* Bullet = GetWorld()->SpawnActor<ASmallMunition>(SpawnLocation, FRotator(0, 0, 0));
+		Bullet->SetOwner(MyCube);
+
+		Bullet->Direction = AttackDirection;
+
+		if (bAction) { HighlightAttackOptions(MyCube->BlockOwner, false); SetAction("Attack", AttackDirection); }
 
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("DoAction ended"));
+	//If at the setting actions stage spawn locally
+	//If doing the actions together then it needs to be on the server and replicated.
+	else if (GetLocalRole() < ROLE_Authority) {
+			Server_AttackAction(this, AttackDirection, false);
+			const FRotator SpawnRotation = FRotator(0, 0, 0);
+
+			const FVector SpawnLocation = MyCube->GetActorLocation();
+
+			ASmallMunition* Bullet = GetWorld()->SpawnActor<ASmallMunition>(MyCube->GetActorLocation(), FRotator(0, 0, 0));
+			Bullet->SetOwner(MyCube);
+			//Bullet->SetReplicates(true);
+			Bullet->Direction = AttackDirection;
+
+		}
+		else {
+
+			//const FRotator SpawnRotation = GetControlRotation();
+			const FRotator SpawnRotation = FRotator(0, 0, 0);
+
+			const FVector SpawnLocation = MyCube->GetActorLocation();
+
+			ASmallMunition* Bullet = GetWorld()->SpawnActor<ASmallMunition>(MyCube->GetActorLocation(), FRotator(0, 0, 0));
+			Bullet->SetOwner(MyCube);
+			Bullet->SetReplicates(true);
+			Bullet->Direction = AttackDirection;
+		}
+	
 }
 
-/*This is all ready for DoAction to call it*/
-void ACube_TheBattleMasterPawn::DoMove(FString Position, int32 MoveNumb) {
-	ACube_TheBattleMasterBlockGrid* DummyGrid  = GetGrid();
-	FVector2D CurrentPosition = DummyGrid->GridReference.FindRef(MyCube->BlockOwner->GetTargetLocation());
-	FVector2D MovePosition;
+void ACube_TheBattleMasterPawn::Server_AttackAction_Implementation(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction) { AttackAction(Pawn, AttackDirection, false); }
 
-	if (Position == "Up") { MovePosition = FVector2D(1, 0); }
-	else if (Position == "Down") { MovePosition = FVector2D(-1, 0); }
-	else if (Position == "Right") { MovePosition = FVector2D(0, 1); }
-	else if (Position == "Down") { MovePosition = FVector2D(0, -1); }
-	else { MovePosition = FVector2D(0, 0); }
-
-	FVector2D SetPosition = CurrentPosition + MovePosition * MoveNumb;
-	//UE_LOG(LogTemp, Warning, TEXT("%s : Go to %s "), (*Position, *SetPosition.ToString()));
-	if (DummyGrid->Grid.Contains(SetPosition)) { Movement(DummyGrid->Grid.FindRef(SetPosition)->GetTargetLocation()); }
-	else Movement(DummyGrid->Grid.FindRef(CurrentPosition)->GetTargetLocation()); 
-}
-
-ACube_TheBattleMasterBlockGrid* ACube_TheBattleMasterPawn::GetGrid() {
+ACube_TheBattleMasterBlockGrid* ACube_TheBattleMasterPawn::GetGrid() 
+{
 	FString StopLoop = GetName();
 	StopLoop.RemoveAt(0, GetName().Len() - 1);
 	int32 Stoploop = FCString::Atoi(*StopLoop);
+
 	int32 i = 0;
 	for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid; Grid; ++Grid) {
 		if (i == Stoploop + 1) { return *Grid; }
@@ -262,40 +345,37 @@ ACube_TheBattleMasterBlockGrid* ACube_TheBattleMasterPawn::GetGrid() {
 }
 
 
-void ACube_TheBattleMasterPawn::SetCube(ACube_TheBattleMasterPawn* Pawn)
+void ACube_TheBattleMasterPawn::SetCube(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block)
 {
-	if (GetLocalRole() < ROLE_Authority) {
-		Server_SetCube(Pawn);
-	}
+	if (GetLocalRole() < ROLE_Authority) { Server_SetCube(Pawn, Block); }
 	else {
-		if (Pawn->MyCube == nullptr) {
-			ACube_TheBattleMasterBlockGrid* ThisGrid = GetGrid();
-			TArray<FVector> GridKeys;
-			ThisGrid->GridReference.GenerateKeyArray(GridKeys);
-			
+		if (!Pawn->MyCube) {
 
-			FVector dummyPosition = GridKeys[FMath::RandRange(0, GridKeys.Num()-1)];
-			//FVector Position = FVector(1000, 500, 0);
-			Pawn->MyCube = GetWorld()->SpawnActor<APlayer_Cube>(dummyPosition, FRotator(0, 0, 0));
-			Pawn->MyCube->SetOwner(this);
-			Pawn->MyCube->Movement(dummyPosition);
-			StartingBlock = ThisGrid->Grid.FindRef(ThisGrid->GridReference.FindRef(dummyPosition));
+			//FVector SpawnLocation = Block->GetActorLocation() + FVector(0.f, 0.f, 500.f);
+			//UE_LOG(LogTemp, Warning, TEXT("Spawn here: %s"), *SpawnLocation.ToString());
+			//Pawn->MyCube = GetWorld()->SpawnActor<APlayer_Cube>(Block->GetActorLocation(), FRotator(0, 0, 0));
+			//Pawn->MyCube->SetOwner(this);
 
-			MoveCube(StartingBlock, false);
-			//TODO This sets the cube as movement so check if pawn is selected then move
+			//Pawn->StartingBlock = Block;
+
+			//Pawn->MoveCube(Block, false);
+			//Pawn->Movement(MyCube->GetActorLocation());
+
 			
+			MyCube = GetWorld()->SpawnActor<APlayer_Cube>(Block->GetActorLocation(), FRotator(0, 0, 0));
+			MyCube->SetOwner(this);
+
+			StartingBlock = Block;
+
+			MoveCube(Block, false);
+			Movement(MyCube->GetActorLocation());
 		}
-	}
+	}//Pawn->CubeMade();
+	CubeMade();
 }
 
-bool ACube_TheBattleMasterPawn::Server_SetCube_Validate(ACube_TheBattleMasterPawn* Pawn) {
-	if (Pawn->MyCube == nullptr){
-		return true;
-	}
-	return false;
-}
+void ACube_TheBattleMasterPawn::Server_SetCube_Implementation(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block){ SetCube(Pawn, Block); }
 
-void ACube_TheBattleMasterPawn::Server_SetCube_Implementation(ACube_TheBattleMasterPawn* Pawn){ SetCube(Pawn); }
 
 void ACube_TheBattleMasterPawn::ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon) {
 	if (GetLocalRole() < ROLE_Authority)
@@ -308,45 +388,91 @@ void ACube_TheBattleMasterPawn::ToggleOccupied(ACube_TheBattleMasterBlock* Block
 
 void ACube_TheBattleMasterPawn::Server_ToggleOccupied_Implementation(ACube_TheBattleMasterBlock* Block, bool Bon) { ToggleOccupied(Block, Bon); }
 
-void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove) {
-	
-	APlayer_Cube* ThisCube = Pawn->MyCube;
-	ACube_TheBattleMasterBlockGrid* BlockGrid;
-	ACube_TheBattleMasterBlockGrid* DummyGrid;
-	FVector2D Grid_Location;
-	int32 size;
+void ACube_TheBattleMasterPawn::HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove) {
+
+	//UE_LOG(LogTemp, Warning, TEXT("MyCube position 1: %s"), *Pawn->MyCube->GetActorLocation().ToString())
+
 	if (GetLocalRole() < ROLE_Authority) {
-		Server_HighlightMoveOptions(Pawn, Block, Bmove);
+		//UE_LOG(LogTemp, Warning, TEXT("MyCube position 2: %s"), *Pawn->MyCube->GetActorLocation().ToString())
+
+		Server_HighlightMoveOptions(Block, Bmove);
 	}
 	else {
-		if (ThisCube != nullptr) {
-			FString StopLoop = GetName();
-			StopLoop.RemoveAt(0, GetName().Len()-1);
-			int32 Stoploop = FCString::Atoi(*StopLoop);
-			int32 i = 0;
-			for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid; Grid; ++Grid) {
-				DummyGrid = *Grid;
-				Grid_Location = DummyGrid->GridReference.FindRef(ThisCube->GetActorLocation());
-				size = DummyGrid->Size;
-				if (i != 0) { //DummyGrid->Grid.FindRef(DummyGrid->GridReference.FindRef(Block->GetTargetLocation()))->ToggleOccupied(Bmove); 
-				}
-				if (i == Stoploop+1) { BlockGrid = *Grid; }
-				i++;
-			}
-			for (int32 X = Grid_Location.X - ThisCube->Base_Speed; X <= Grid_Location.X + ThisCube->Base_Speed; X++) {
-				for (int32 Y = Grid_Location.Y - ThisCube->Base_Speed; Y <= Grid_Location.Y + ThisCube->Base_Speed; Y++) {
-					if (BlockGrid->Grid.Contains(FVector2D(X, Y))) {
-						if (FVector2D(X, Y)==BlockGrid->GridReference.FindRef(Block->GetTargetLocation())) { //ToggleOccupied(Block, Bmove);
+		
+		APlayer_Cube* ThisCube = MyCube;
+		ACube_TheBattleMasterBlockGrid* BlockGrid = GetGrid();
+		//UE_LOG(LogTemp, Warning, TEXT("MyCube position 3: %s"), *Pawn->MyCube->GetActorLocation().ToString())
+
+		FVector2D Grid_Location ;
+		
+		if (Block) { Grid_Location = BlockGrid->GridReference.FindRef(Block->GetActorLocation()); }
+		else { Grid_Location = BlockGrid->GridReference.FindRef(MyCube->GetActorLocation()); }
+		FVector DummyLocation;
+		if (Block) { DummyLocation = Block->GetTargetLocation(); }
+		else { DummyLocation = MyCube->GetActorLocation(); }
+			
+		for (int32 X = Grid_Location.X - ThisCube->Base_Speed; X <= Grid_Location.X + ThisCube->Base_Speed; X++) {
+			for (int32 Y = Grid_Location.Y - ThisCube->Base_Speed; Y <= Grid_Location.Y + ThisCube->Base_Speed; Y++) {
+				if (BlockGrid->Grid.Contains(FVector2D(X, Y))) {
+					if (FVector2D(X, Y) == BlockGrid->GridReference.FindRef(DummyLocation)) {
+						if (Block) {
+							Block->CanMove(false);
+							/*ToggleOccupied(Block, Bmove);*/
 						}
-						else { BlockGrid->Grid.FindRef(FVector2D(X, Y))->CanMove(Bmove); }
+					}
+					else {
+						BlockGrid->Grid.FindRef(FVector2D(X, Y))->CanMove(Bmove);
 					}
 				}
 			}
 		}
+		
 	}
 }
 
-void ACube_TheBattleMasterPawn::Server_HighlightMoveOptions_Implementation(ACube_TheBattleMasterPawn* Pawn, ACube_TheBattleMasterBlock* Block, bool Bmove) { HighlightMoveOptions(Pawn, Block, Bmove); }
+
+void ACube_TheBattleMasterPawn::Server_HighlightMoveOptions_Implementation(ACube_TheBattleMasterBlock* Block, bool Bmove) { HighlightMoveOptions(Block, Bmove); }
+
+
+void ACube_TheBattleMasterPawn::HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle)
+{
+	if (GetLocalRole() < ROLE_Authority) {
+		Server_HighlightAttackOptions(Block, bToggle);
+	}
+	else{
+		
+		ACube_TheBattleMasterBlockGrid* BlockGrid = GetGrid();
+		FVector2D Grid_Location;
+
+		if (Block) { Grid_Location = BlockGrid->GridReference.FindRef(Block->GetActorLocation()); }
+		else { Grid_Location = BlockGrid->GridReference.FindRef(MyCube->GetActorLocation()); }
+
+		for (int32 X = 0; X <= 8*MyCube->AttackRange; X++) {
+			int32 Radius = MyCube->AttackRange;
+			float Angle = 2 * 3.14159 * X / (8 * MyCube->AttackRange);
+		
+			Highlight_Block(FMath::RoundHalfFromZero(Grid_Location.X + Radius * FMath::Sin(Angle)), FMath::RoundHalfFromZero(Grid_Location.Y + Radius * FMath::Cos(Angle)), bToggle);
+
+		}
+	}
+}
+void ACube_TheBattleMasterPawn::Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle)
+{
+	
+	while (dummyX < 0) { ++dummyX; }
+	while (dummyX >= GetGrid()->Size) { --dummyX; }
+	while (dummyY < 0) { ++dummyY; }
+	while (dummyY >= GetGrid()->Size) { --dummyY; }
+
+	if (GetGrid()->Grid.Contains(FVector2D(dummyX, dummyY))) {
+		GetGrid()->Grid.FindRef(FVector2D(dummyX, dummyY))->CanAttack(bToggle);
+	}
+}
+
+void ACube_TheBattleMasterPawn::Server_HighlightAttackOptions_Implementation(ACube_TheBattleMasterBlock* Block, bool bToggle)
+{
+	HighlightAttackOptions(Block, bToggle);
+}
 
 void ACube_TheBattleMasterPawn::TheGameMode() {
 	if (GetLocalRole() < ROLE_Authority) { GameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this)); }
@@ -367,62 +493,55 @@ void ACube_TheBattleMasterPawn::TriggerClick()
 	if (CurrentBlockFocus && !bDead)
 	{			
 		CurrentBlockFocus->HandleClicked();
-		if (MyCube != nullptr && CurrentBlockFocus->bMove && !bReady) {	MoveCube(CurrentBlockFocus,true); this->Reset_Buttons_test();}
-		else { SetCube(this); }
+		if (MyCube != nullptr) {
+			if (!bReady) {
+				if (CurrentBlockFocus->bMove) { MoveCube(CurrentBlockFocus, true); this->Reset_Buttons_test();}
+				else if (CurrentBlockFocus->bAttack) { AttackAction(this, CurrentBlockFocus->GetActorLocation() - MyCube->GetActorLocation(), true); this->Reset_Buttons_test(); }
+			}
+		}
+		else { SetCube(this, CurrentBlockFocus); }
 	}//ActionSelected();
 }
 
-void ACube_TheBattleMasterPawn::MoveCube(ACube_TheBattleMasterBlock* Block, bool bAction) {
-	ACube_TheBattleMasterBlock* PreviousBlock;
-	if (MyCube->BlockOwner) { PreviousBlock = MyCube->BlockOwner; }
-	else { PreviousBlock = Block; }
-	MyCube->BlockOwner = Block;
 
-	ToggleOccupied(Block, false);
-	HighlightMoveOptions(this, Block, false);
 
-	Movement(Block->BlockPosition);
-	if (bAction) {
-		SetAction("Movement", Block->BlockPosition - PreviousBlock->BlockPosition);
-		//UE_LOG(LogTemp, Warning, TEXT("Previous Block's Block Position: %s"), *PreviousBlock->BlockPosition.ToString());
-		//UE_LOG(LogTemp, Warning, TEXT("Current Block's Position: %s"), *Block->BlockPosition.ToString());
-	}
 
-}
 
 void ACube_TheBattleMasterPawn::Turn()
 {
-	bReady = true;
 	if (GetLocalRole() < ROLE_Authority) { Server_Turn(); }
 	else {
 		ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
 		BaseGameMode->TakeTurn();
-		//ActionNumb = 0;
 	}	
-	//Movement(StartingBlock);
 }
 
-void ACube_TheBattleMasterPawn::Server_Turn_Implementation() { Turn(); }
+void ACube_TheBattleMasterPawn::Server_Turn_Implementation() { Turn();}
 
+
+void ACube_TheBattleMasterPawn::Ready_Button_Implementation()
+{
+	Turn();
+}
 
 void ACube_TheBattleMasterPawn::ResetEverything() {
-	MoveCube(StartingBlock, false);
-	for (TObjectIterator<ACube_TheBattleMasterBlock> Block; Block; ++Block) {
-		Block->Highlight(false);
-		Block->bMove = false;
-	}
-	
-	DoAction();
-	
-	bReady = false;
 	M_Action_Name.Empty();
 	M_Action_Pos.Empty();
 	ActionNumb = 0;
+	bReady = false;
 
-	StartingBlock = MyCube->BlockOwner;
-	
-	//MyCube->Movement(GetActorLocation());
-	
+	StartingBlock=NULL;
+
+	this->Reset_Buttons_test();
+
+}
+
+
+void ACube_TheBattleMasterPawn::Cancel_Button_Implementation() {
+	M_Action_Name.Empty();
+	M_Action_Pos.Empty();
+	ActionNumb = 0;
+	bReady = !bReady;
 }
 //bool ACube_TheBattleMasterPawn::IsInVacinity() {
 //	ACube_TheBattleMasterBlockGrid* BlockGrid;
@@ -465,7 +584,7 @@ void ACube_TheBattleMasterPawn::CubeDestroy() {
 			ACube_TheBattleMasterGameMode* BaseGameMode = Cast<ACube_TheBattleMasterGameMode>(UGameplayStatics::GetGameMode(this));
 			BaseGameMode->EndGameCondition();
 		}
-		HighlightMoveOptions(this, MyCube->BlockOwner, false);
+		HighlightMoveOptions(MyCube->BlockOwner, false);
 	}
 }
 //

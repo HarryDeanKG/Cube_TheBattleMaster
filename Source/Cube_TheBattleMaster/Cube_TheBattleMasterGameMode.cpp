@@ -6,13 +6,16 @@
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPawn.h"
 #include "UObject/ConstructorHelpers.h"
+#include "TimerManager.h"
 
 ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// no pawn by default
 	//DefaultPawnClass = ACube_TheBattleMasterPawn::StaticClass();
 
-	//FIND THE GOD DAMN BLUEPRINT FUCK!!!!
+	//FIND THE GOD DAMN BLUEPRINT 
 	UClass* MyPawnBlueprintClass;
 
 	static ConstructorHelpers::FClassFinder<APawn> MyPawnFinder(TEXT("/Game/BP_Classes/BP_Pawn"));
@@ -25,12 +28,35 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 	//E_GameSectionEnum = EGameSection::GS_StartSection;
 	E_GameSectionEnum = EGameSection::GS_MidSection;
 	Game_turn = 200;
+
 }
 
-void ACube_TheBattleMasterGameMode::BeginPlay() {
+//void ACube_TheBattleMasterGameMode::BeginPlay() {
+//	
+//	//for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
+//	//	Pawn->SetCube(*Pawn);
+//	//}
+//}
+
+void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
+	Super::Tick(DeltaSeconds);
 	
-	for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
-		Pawn->SetCube(*Pawn);
+	/*Do the actions that are preset*/
+	if (bDoActions) {
+		
+		/*Replace with the timer function that dictates speed etc...*/
+		bNextTurn = true;
+		
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { if (PlayerPawn->MyCube->bDoAction) { bNextTurn = false; } }
+		if (bNextTurn) {
+			for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn){
+				if (doAction > 3) {
+					PlayerPawn->ResetEverything(); bDoActions = false; PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_SelectActions; PlayerPawn->MyCube->SetReplicatingMovement(false);
+				}
+				else{ if (PlayerPawn->M_Action_Name.Contains(doAction)) { PlayerPawn->DoAction(doAction); } }
+			}if (!bDoActions) { doAction = 0; E_TurnStateEnum = ETurnState::TS_SelectActions; }
+			else { doAction++; }
+		}
 	}
 }
 
@@ -39,28 +65,52 @@ void ACube_TheBattleMasterGameMode::TakeTurn()
 	if (Game_turn < 1){/* End Game*/ }
 	Players_Ready += 1;
 	if (Players_Ready == GetNumPlayers()) { 
-		if (E_GameSectionEnum == EGameSection::GS_StartSection) { E_GameSectionEnum = EGameSection::GS_MidSection; }
+		//if (E_GameSectionEnum == EGameSection::GS_StartSection) { E_GameSectionEnum = EGameSection::GS_MidSection; }
 		E_TurnStateEnum = ETurnState::TS_InitiateActions;
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_InitiateActions; PlayerPawn->MyCube->SetReplicatingMovement(true);
+		}
+
 		Game_turn -= 1; 
 		Players_Ready = 0; 
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {PlayerPawn->ResetEverything();}
-		E_TurnStateEnum = ETurnState::TS_PreSelection;
+
+		bDoActions = true;
+
+		//E_TurnStateEnum = ETurnState::TS_PreSelection;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Game turn: %d"), Game_turn);
 	UE_LOG(LogTemp, Warning, TEXT("Player ready: %d"), Players_Ready);
 }
 
-
 void ACube_TheBattleMasterGameMode::EndGameCondition()
 {
-	int32 dummy_count=0;
-	
+	int32 dummy_count = 0;
+
 	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
 		if (PlayerPawn->bDead) {
 			dummy_count++;
 		}
 	}
-	if (dummy_count == GetNumPlayers()-1) {/*EndGame*/
+	if (dummy_count == GetNumPlayers() - 1) {/*EndGame*/
 		UE_LOG(LogTemp, Warning, TEXT("EndGame"));
 	}
 }
+
+
+//void ACube_TheBattleMasterGameMode::TimerElapsed()
+//{
+//	bNextTurn = true;
+//	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn)
+//	{
+//		if (PlayerPawn->MyCube->bMove) { bNextTurn = false; }
+//	}
+//	// Once we've called this function enough times, clear the Timer.
+//	if (bNextTurn)
+//	{
+//		GetWorldTimerManager().ClearTimer(UnusedHandle);
+//		// MemberTimerHandle can now be reused for any other Timer.
+//	}
+//	UE_LOG(LogTemp, Warning, TEXT("Test !!!!!"));
+//
+//	// Do something here...
+//}
+
