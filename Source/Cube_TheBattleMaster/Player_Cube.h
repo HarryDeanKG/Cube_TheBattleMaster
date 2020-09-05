@@ -23,7 +23,7 @@ class CUBE_THEBATTLEMASTER_API APlayer_Cube : public AActor
 	class USceneComponent* DummyRoot;
 
 	/** StaticMesh component for the clickable block */
-	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* BlockMesh;
 
 public:	
@@ -39,7 +39,12 @@ public:
 
 	float time = 0.0f;
 	float ActionTimer = 5.0f;
+
+	UPROPERTY(Replicated)
 	bool bDoAction = false;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bReady = false;
 
 	bool bMove=false;
 	bool bHasMoved = false;
@@ -98,8 +103,9 @@ public:
 	void ApplyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	USpringArmComponent* OurCameraSpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UCameraComponent* OurCamera;
 
 public:
@@ -107,6 +113,7 @@ public:
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
+
 	/** Returns Camera subobject **/
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
 };

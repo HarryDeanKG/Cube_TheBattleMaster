@@ -10,7 +10,7 @@
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
 
-class ASmallMunitionBase;
+//class ASmallMunitionBase;
 
 UCLASS(config=Game)
 class ACube_TheBattleMasterPawn : public APawn
@@ -44,12 +44,29 @@ class ACube_TheBattleMasterPawn : public APawn
 	//UPROPERTY(Replicated, EditAnyWhere)
 	//APlayer_Cube* MyCube;
 
-	UFUNCTION() void OnRep_MyCuben();
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyCuben)
+	
+
+	UFUNCTION(BlueprintCallable) void OnRep_MyCube();
+	UPROPERTY(Transient, BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_MyCube)
 	class APlayer_Cube* MyCube;
 
+	UPROPERTY(Transient, BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_MyCube)
+	class APlayer_Cube* CubeSelected;
 
+
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Player Cube")
+	TSubclassOf<APlayer_Cube> PlayerCubeClass;
+
+
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CubeMaterialUpdate();
+
+	
 	bool bDead = false;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, EditAnywhere)
 	bool bReady = false;
 
 	int32 ActionNumb;
@@ -87,21 +104,15 @@ class ACube_TheBattleMasterPawn : public APawn
 	ACube_TheBattleMasterBlockGrid* MyGrid;
 
 
-	ACube_TheBattleMasterGameMode* GameMode;
-
-	UFUNCTION(Server, Reliable)
-	void Server_TheGameMode();
-
 public:
 
 	/*Attack Section*/
 	UFUNCTION(BlueprintCallable)
 	void Attack_Test(bool bToggle);
 
-	//FVector AttackDirection = FVector(0,0,0);
 
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	//TSubclassOf<ASmallMunitionBase> SmallMunitionClass;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Type")
+	TSubclassOf<ASmallMunition> SmallMunitionClass;
 
 	UFUNCTION(BlueprintCallable)
 	void Movement_Test(bool bToggle);
@@ -130,6 +141,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void CubeMade();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void Waiting();
 
 	//virtual void BeginPlay() override;
 
@@ -149,6 +162,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetCube(ACube_TheBattleMasterPawn* Test, ACube_TheBattleMasterBlock * Block);
 
+	UFUNCTION(BlueprintCallable)
 	void SetCube(ACube_TheBattleMasterPawn * Pawn, ACube_TheBattleMasterBlock * Block);
 
 	void Movement(FVector dummyPosition);
@@ -173,7 +187,7 @@ protected:
 	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle);
 
 
-	void TheGameMode();
+	
 
 
 	

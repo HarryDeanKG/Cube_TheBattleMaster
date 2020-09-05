@@ -15,18 +15,20 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 	// no pawn by default
 	//DefaultPawnClass = ACube_TheBattleMasterPawn::StaticClass();
 
+	/*
 	//FIND THE GOD DAMN BLUEPRINT 
 	UClass* MyPawnBlueprintClass;
 
 	static ConstructorHelpers::FClassFinder<APawn> MyPawnFinder(TEXT("/Game/BP_Classes/BP_Pawn"));
 	MyPawnBlueprintClass = (UClass*)MyPawnFinder.Class;
 
-	DefaultPawnClass = MyPawnBlueprintClass;
+	DefaultPawnClass = MyPawnBlueprintClass;*/
+
 	// use our own player controller class
 	PlayerControllerClass = ACube_TheBattleMasterPlayerController::StaticClass();
 
-	//E_GameSectionEnum = EGameSection::GS_StartSection;
-	E_GameSectionEnum = EGameSection::GS_MidSection;
+	E_GameSectionEnum = EGameSection::GS_StartSection;
+	//E_GameSectionEnum = EGameSection::GS_MidSection;
 	Game_turn = 200;
 
 }
@@ -47,7 +49,13 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 		/*Replace with the timer function that dictates speed etc...*/
 		bNextTurn = true;
 		
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { if (PlayerPawn->MyCube->bDoAction) { bNextTurn = false; } }
+		int i = 0;
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+			
+			UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bDoAction ? TEXT("True") : TEXT("False"));
+			if (PlayerPawn->MyCube->bDoAction) { bNextTurn = false; }
+			i++;
+		}
 		if (bNextTurn) {
 			for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn){
 				if (doAction > 3) {
@@ -96,21 +104,36 @@ void ACube_TheBattleMasterGameMode::EndGameCondition()
 }
 
 
-//void ACube_TheBattleMasterGameMode::TimerElapsed()
-//{
-//	bNextTurn = true;
-//	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn)
-//	{
-//		if (PlayerPawn->MyCube->bMove) { bNextTurn = false; }
-//	}
-//	// Once we've called this function enough times, clear the Timer.
-//	if (bNextTurn)
-//	{
-//		GetWorldTimerManager().ClearTimer(UnusedHandle);
-//		// MemberTimerHandle can now be reused for any other Timer.
-//	}
-//	UE_LOG(LogTemp, Warning, TEXT("Test !!!!!"));
-//
-//	// Do something here...
-//}
+bool ACube_TheBattleMasterGameMode::BeginTheGame_Implementation()
+{
+	//This is to circumvent the StartSection
+	E_GameSectionEnum = EGameSection::GS_MidSection;
+	return true;
+
+	int32 i = 0;
+	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+		if (PlayerPawn->CubeSelected) {
+			//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *PlayerPawn->GetName(), PlayerPawn->CubeSelected->bReady ? TEXT("True") : TEXT("False"));
+			if (PlayerPawn->CubeSelected->bReady) {
+				i++;
+			}
+		}
+	}
+	
+	if (GetNumPlayers() <= i){
+		E_GameSectionEnum = EGameSection::GS_MidSection;
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+			if (PlayerPawn->CubeSelected) {
+				PlayerPawn->Waiting();
+				PlayerPawn->bReady = false;
+				PlayerPawn->CubeSelected->bReady = false;
+				PlayerPawn->CubeSelected->SetActorLocation(FVector(0.f));
+				PlayerPawn->CubeSelected->Destroy();
+			}
+		}
+		return true;
+	}
+	else { return false; }
+	
+}
 

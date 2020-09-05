@@ -3,12 +3,15 @@
 #include "Cube_TheBattleMasterBlockGrid.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Components/TextRenderComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 
 #define LOCTEXT_NAMESPACE "PuzzleBlockGrid"
 
 ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 {
+	SetReplicates(true);
+	
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
 	RootComponent = DummyRoot;

@@ -51,9 +51,6 @@ public:
 
 	void TakeTurn();
 
-	//FTimerHandle UnusedHandle;
-	//void TimerElapsed();
-
 
 	void EndGameCondition();
 
@@ -61,6 +58,9 @@ public:
 	int32 Game_turn;
 
 	int32 Players_Ready;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+		bool BeginTheGame();
 
 };
 

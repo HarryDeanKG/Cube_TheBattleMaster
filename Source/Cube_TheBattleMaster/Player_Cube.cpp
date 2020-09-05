@@ -16,6 +16,7 @@ APlayer_Cube::APlayer_Cube()
 
 	//bReplicateMovement = true;
 	bReplicates = true;
+
 	bNetUseOwnerRelevancy = true;
 	
 	bAlwaysRelevant = true;
@@ -40,15 +41,20 @@ APlayer_Cube::APlayer_Cube()
 
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
+	//DummyRoot->SetIsReplicated(true);
 	RootComponent = DummyRoot;
+	
+
 
 	// Create static mesh component
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh0"));
+	//BlockMesh->SetIsReplicated(true);
 	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 	BlockMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
 	BlockMesh->SetRelativeLocation(FVector(0.f, 0.f, 125.f));
 	BlockMesh->SetMaterial(0, ConstructorStatics.BaseMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
+	
 
 	// Save a pointer to the orange material
 	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
@@ -63,6 +69,7 @@ APlayer_Cube::APlayer_Cube()
 
 	OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	OurCamera->SetupAttachment(OurCameraSpringArm, USpringArmComponent::SocketName);
+	//OurCamera->SetIsReplicated(true);
 
 	OnTakeAnyDamage.AddDynamic(this, &APlayer_Cube::ApplyDamage);
 
@@ -128,7 +135,7 @@ void APlayer_Cube::Tick(float DeltaSeconds)
 	if (bDoAction) {
 		time += DeltaSeconds; 
 		//UE_LOG(LogTemp, Warning, TEXT("%s time is %f and do action is %s"), *GetName(), time, bDoAction ? TEXT("True") : TEXT("False"));
-		if (ActionTimer <= time) { bDoAction = false; time = 0.f; }
+		if (ActionTimer <= time && !bMove) { bDoAction = false; time = 0.f; }
 	}
 }
 
@@ -160,7 +167,7 @@ void APlayer_Cube::SetOwningPawn(ACube_TheBattleMasterPawn* NewOwner)
 }
 
 void APlayer_Cube::Movement(FVector MovePosition) {
-	if (E_TurnStateEnum == ETurnState::TS_InitiateActions && GetLocalRole() < ROLE_Authority) { Server_Movement(MovePosition); SetActorLocation(MovePosition);}
+	if (E_TurnStateEnum == ETurnState::TS_InitiateActions && GetLocalRole() < ROLE_Authority) { Server_Movement(MovePosition); /* SetActorLocation(MovePosition);*/}
 	else { SetActorLocation(MovePosition); /*UE_LOG(LogTemp, Warning, TEXT("MOVE! %s goes %s"), *GetName(), *MovePosition.ToString()); */ }
 }
 
@@ -176,5 +183,7 @@ void APlayer_Cube::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutL
 	DOREPLIFETIME(APlayer_Cube, Replicated_Health);
 
 	DOREPLIFETIME(APlayer_Cube, Replicated_Speed);
+	
+	DOREPLIFETIME(APlayer_Cube, bDoAction);
 
 }
