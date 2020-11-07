@@ -19,7 +19,7 @@ ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 	// Create static mesh component
 	ScoreText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreText0"));
 	ScoreText->SetRelativeLocation(FVector(-1000.f,-1000.f,-1000.f));
-	ScoreText->SetRelativeRotation(FRotator(90.f,0.f,0.f));
+	ScoreText->SetRelativeRotation(FRotator(0.f,0.f,0.f));
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Score: {0}"), FText::AsNumber(0)));
 	ScoreText->SetupAttachment(DummyRoot);
 

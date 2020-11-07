@@ -5,12 +5,31 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Player_Cube.h"
-#include "SmallMunition.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
 
-//class ASmallMunitionBase;
+USTRUCT(BlueprintType)
+struct FAction_Struct
+{
+	GENERATED_BODY()
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Action_Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Action_Position = FVector(0.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Action_Weapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AItemBase* Item = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector MovementDuringAction = FVector(0.f);;
+};
 
 UCLASS(config=Game)
 class ACube_TheBattleMasterPawn : public APawn
@@ -41,10 +60,6 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
 
-	//UPROPERTY(Replicated, EditAnyWhere)
-	//APlayer_Cube* MyCube;
-
-	
 
 	UFUNCTION(BlueprintCallable) void OnRep_MyCube();
 	UPROPERTY(Transient, BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_MyCube)
@@ -58,7 +73,8 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Player Cube")
 	TSubclassOf<APlayer_Cube> PlayerCubeClass;
 
-
+	UPROPERTY(BlueprintReadWrite)
+	AItemBase* SelectedItem;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void CubeMaterialUpdate();
@@ -70,28 +86,39 @@ class ACube_TheBattleMasterPawn : public APawn
 	bool bReady = false;
 
 	int32 ActionNumb;
+	int32 MoveNumb;
 	int32 DoActionNumb;
+
+	FString WeaponName = "default";
+
+	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
+	void RefreshMovement();
 
 	/*List of Actions to undertake*/
 	UPROPERTY(BlueprintReadWrite)
-	TMap<int32, FString> M_Action_Name;
+	TMap<int32, FAction_Struct> M_ActionStructure;
 
 	UPROPERTY(BlueprintReadWrite)
-	TMap<int32, FVector> M_Action_Pos;
+	TMap<int32, FVector> M_MovementList;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	TMap<FString, FString> M_PossibleActions;
+	
+	TArray<AActor*> FlagedForDeleation;
+	TArray< ACube_TheBattleMasterBlock*> ToggleBackList;
+	TArray<ACube_TheBattleMasterBlock*> Path;
 
 	UPROPERTY(EditAnyWhere)
 	ACube_TheBattleMasterBlock* StartingBlock;
 
+	void SetAction(FString ActionName, ACube_TheBattleMasterBlock * Block);
+
 	/*Called to initiate what action is to be done*/
 	void DoAction(int int_Action);
 
-	void AttackAction(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction);
+	void AttackAction(ACube_TheBattleMasterPawn * Pawn, FString Name, ACube_TheBattleMasterBlock * Block, bool bAction);
 
-	UFUNCTION(Server, Reliable)
-	void Server_AttackAction(ACube_TheBattleMasterPawn* Pawn, FVector AttackDirection, bool bAction);
+	//void AttackAction(ACube_TheBattleMasterPawn* Pawn, FString Name, FVector AttackDirection, bool bAction);
 
 
 	void Test();
@@ -100,23 +127,32 @@ class ACube_TheBattleMasterPawn : public APawn
 	UFUNCTION()
 	ACube_TheBattleMasterBlockGrid* GetGrid();
 
+	ACube_TheBattleMasterBlock * GetBlockFromPosition(FVector Direction);
+
 
 	ACube_TheBattleMasterBlockGrid* MyGrid;
 
 
 public:
 
-	/*Attack Section*/
 	UFUNCTION(BlueprintCallable)
-	void Attack_Test(bool bToggle);
+	void Attack_Test(FString Name, bool bToggle);
 
+	UFUNCTION(BlueprintCallable)
+	void SetInMotionSelectedAction(AItemBase * dummyItem);
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Type")
-	TSubclassOf<ASmallMunition> SmallMunitionClass;
+	void ClearVars();
+
+	UFUNCTION(BlueprintCallable)
+	void StopMovement();
+
+	UFUNCTION(BlueprintCallable)
+	void NoAction();
+
+	void ResetEverything(bool bResetPosition);
 
 	UFUNCTION(BlueprintCallable)
 	void Movement_Test(bool bToggle);
-
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void Reset_Buttons_test();
@@ -124,13 +160,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Ready_Button();
 
-	void ResetEverything();
 	FString String_Action;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Cancel_Button();
 
-	void SetAction(FString ActionName, FVector DummyPosition);
+	//void SetAction(FString ActionName, FVector DummyPosition);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ActionSelected();
@@ -147,6 +182,8 @@ public:
 	//virtual void BeginPlay() override;
 
 	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void UpdateActions();
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -167,7 +204,7 @@ public:
 
 	void Movement(FVector dummyPosition);
 
-protected:
+
 
 	void ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon);
 
@@ -179,19 +216,23 @@ protected:
 	UFUNCTION(Reliable, Server)
 	void Server_HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
 	
-	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle);
+	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int distance, bool bAttackImmutables);
 
 	UFUNCTION(Reliable, Server)
-	void Server_HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle);
+	void Server_HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int distance, bool bAttackImmutables);
 
-	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle);
+	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle, bool bAttackImmutables);
+
+
+protected:
 
 
 	
 
 
-	
+	void Highlight_Path(ACube_TheBattleMasterBlock * Start, ACube_TheBattleMasterBlock * End);
 
+	void Highlight_PathBlock(int32 X, int32 Y);
 
 	void TriggerClick();
 

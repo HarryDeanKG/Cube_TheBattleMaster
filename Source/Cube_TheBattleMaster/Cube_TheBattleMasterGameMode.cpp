@@ -52,17 +52,32 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 		int i = 0;
 		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
 			
-			UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bDoAction ? TEXT("True") : TEXT("False"));
+			//UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bDoAction ? TEXT("True") : TEXT("False"));
 			if (PlayerPawn->MyCube->bDoAction) { bNextTurn = false; }
+			//UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bMove ? TEXT("True") : TEXT("False"));
+			if (PlayerPawn->MyCube->bMove) { bNextTurn = false; }
 			i++;
 		}
 		if (bNextTurn) {
 			for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn){
 				if (doAction > 3) {
-					PlayerPawn->ResetEverything(); bDoActions = false; PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_SelectActions; PlayerPawn->MyCube->SetReplicatingMovement(false);
+					UE_LOG(LogTemp, Warning, TEXT("test"));
+					//PlayerPawn->ResetEverything(false);
+					bDoActions = false; 
+					PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_SelectActions; 
+					PlayerPawn->MyCube->SetReplicatingMovement(false); 
+					PlayerPawn->ClearVars();
+					PlayerPawn->Reset_Buttons_test();
+					PlayerPawn->bReady = false;
+					PlayerPawn->UpdateActions();
 				}
-				else{ if (PlayerPawn->M_Action_Name.Contains(doAction)) { PlayerPawn->DoAction(doAction); } }
-			}if (!bDoActions) { doAction = 0; E_TurnStateEnum = ETurnState::TS_SelectActions; }
+				else {
+					//UE_LOG(LogTemp, Warning, TEXT("DoAction: %d - %s"), doAction, PlayerPawn->M_ActionStructure.Contains(doAction) ? TEXT("True") : TEXT("False")); 
+					if (PlayerPawn->M_ActionStructure.Contains(doAction)) {  
+						PlayerPawn->DoAction(doAction); 
+					} 
+				}
+			}if (!bDoActions) { doAction = 0; E_TurnStateEnum = ETurnState::TS_SelectActions;}
 			else { doAction++; }
 		}
 	}

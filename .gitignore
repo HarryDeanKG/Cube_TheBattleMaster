@@ -72,3 +72,13 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# All the added content, anything useful should be moved to a saved file
+Content/*
+
+# Content to be saved
+!Content/BP_Classes
+!Content/Widgets
+!Content/Geometry
+!Content/Puzzle
+!Content/PuzzleCPP

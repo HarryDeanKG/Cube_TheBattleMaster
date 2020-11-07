@@ -20,13 +20,15 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> RedMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> OrangeMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> YellowMaterial;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> PathMaterial;
 		FConstructorStatics()
-			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/FloorBlock.FloorBlock"))
 			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
 			, BlueMaterial(TEXT("/Game/Puzzle/Meshes/BlueMaterial.BlueMaterial"))
 			, RedMaterial(TEXT("/Game/Puzzle/Meshes/RedMaterial.RedMaterial"))
 			, OrangeMaterial(TEXT("/Game/Puzzle/Meshes/OrangeMaterial.OrangeMaterial"))
 			, YellowMaterial(TEXT("/Game/Puzzle/Meshes/YellowMaterial.YellowMaterial"))
+			, PathMaterial(TEXT("/Game/Puzzle/Meshes/PathMaterial.PathMaterial"))
 		{
 		}
 	};
@@ -39,7 +41,7 @@ ACube_TheBattleMasterBlock::ACube_TheBattleMasterBlock()
 	// Create static mesh component
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh0"));
 	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
-	BlockMesh->SetRelativeScale3D(FVector(0.25f,0.25f,0.25f));
+	BlockMesh->SetRelativeScale3D(FVector(0.6f,0.6f,0.25f));
 	BlockMesh->SetRelativeLocation(FVector(0.f,0.f,25.f));
 	BlockMesh->SetMaterial(0, ConstructorStatics.BlueMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
@@ -75,29 +77,28 @@ void ACube_TheBattleMasterBlock::HandleClicked()
 		{
 			OwningGrid->AddScore();
 		}
-		
-		//for (TObjectIterator<APlayer_Cube> PlayerCube; PlayerCube; ++PlayerCube) {
-		//	
-		//		PlayerCube->Movement(BlockPosition);
-		//	
-		//}
 	}
 }
 
 void ACube_TheBattleMasterBlock::Highlight(bool bOn)
 {
 	// Do not highlight if the block has already been activated.
-	if (bIsOccupied)
-	{
-		BlockMesh->SetMaterial(0, YellowMaterial);
-	}
-	else if (bOn)
+
+	if (bOn)
 	{
 		BlockMesh->SetMaterial(0, BaseMaterial);
 	}
 	else if (bMove)
 	{
 		BlockMesh->SetMaterial(0, RedMaterial);
+	}
+	else if (bIsPath)
+	{
+		BlockMesh->SetMaterial(0, PathMaterial);
+	}
+	else if (bIsOccupied)
+	{
+		BlockMesh->SetMaterial(0, YellowMaterial);
 	}
 	else if (bAttack)
 	{
@@ -113,6 +114,10 @@ void ACube_TheBattleMasterBlock::CanMove(bool bOn)
 {
 	// Do not change if occupied 
 	//and if it is within movement space.
+	bMove = bOn;
+	Highlight(false);
+
+	/*
 	if (bOn)
 	{
 		BlockMesh->SetMaterial(0, RedMaterial);
@@ -126,12 +131,16 @@ void ACube_TheBattleMasterBlock::CanMove(bool bOn)
 	{
 		BlockMesh->SetMaterial(0, BlueMaterial);
 		bMove = false;
-	}
+	}*/
 }
 
-void ACube_TheBattleMasterBlock::CanAttack(bool bOn)
+void ACube_TheBattleMasterBlock::CanAttack(bool bOn, bool bIsImmutable)
 {
-	if (bOn) { bAttack = true; BlockMesh->SetMaterial(0, OrangeMaterial);}
+	bool bHighlightAttack;
+	if (bIsImmutable) { bHighlightAttack = bOn; }
+	else { bHighlightAttack = (bOn && !bIsOccupied); }
+
+	if (bHighlightAttack) { bAttack = true; BlockMesh->SetMaterial(0, OrangeMaterial);}
 	else { bAttack = false; BlockMesh->SetMaterial(0, BlueMaterial);}
 }
 
@@ -139,17 +148,20 @@ void ACube_TheBattleMasterBlock::ToggleOccupied(bool bOn)
 {
 	//if (Role < ROLE_Authority) { Server_ToggleOccupied(bOn); }
 	if (bOn) {
-		BlockMesh->SetMaterial(0, YellowMaterial);
+		//BlockMesh->SetMaterial(0, YellowMaterial);
 		bIsOccupied = true;
 	}
 	else {
 		bIsOccupied = false;
-		if (bMove) { BlockMesh->SetMaterial(0, RedMaterial); }
-		else { BlockMesh->SetMaterial(0, BlueMaterial); }
+		/*if (bMove) { BlockMesh->SetMaterial(0, RedMaterial); }
+		else { BlockMesh->SetMaterial(0, BlueMaterial); }*/
 	}
 }
 
-
+void ACube_TheBattleMasterBlock::HighlightPath(bool bOn) {
+	bIsPath = bOn;
+	Highlight(false);
+}
 
 //void ACube_TheBattleMasterBlock::Server_ToggleOccupied_Implementation(bool bOn) { ToggleOccupied(bOn); }
 
@@ -157,4 +169,5 @@ void ACube_TheBattleMasterBlock::GetLifetimeReplicatedProps(TArray< FLifetimePro
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACube_TheBattleMasterBlock, bIsOccupied);
+
 }

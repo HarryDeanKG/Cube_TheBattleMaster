@@ -8,6 +8,10 @@
 #include "Camera/CameraComponent.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterGameMode.h"
+#include "SmallMunition.h"
+#include "ItemBase.h"
+#include "AttackComponent.h"
+#include "AttachmentComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "Cube_TheBattleMasterPlayerController.h"
@@ -26,7 +30,19 @@ class CUBE_THEBATTLEMASTER_API APlayer_Cube : public AActor
 	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* BlockMesh;
 
+	/*UPROPERTY(Category = "Attack", BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	class UAttackComponent* AttackComponent;*/
+
+
+	UPROPERTY(Category = "Attachments", BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	class UAttachmentComponent* AttachmentComponent;
+
+
 public:	
+	UPROPERTY(Category = "Attachments", BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TMap <FString, AItemBase*>  M_SlotsRefference;
+
+
 	// Sets default values for this actor's properties
 	APlayer_Cube();
 
@@ -34,6 +50,8 @@ public:
 
 	ETurnState E_TurnStateEnum;
 	virtual void OnConstruction(const FTransform & Transform) override;
+
+	void UpdateActionList(TMap<FString, FString>& OutMap);
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -51,14 +69,29 @@ public:
 	FVector StartPosition = FVector(0.0f);
 	FVector CurrentPosition;
 	FVector FinalPosition;
-	UFUNCTION(Reliable, Server)
+
+	//Movement function
+	UFUNCTION(Reliable, Server, WithValidation)
 	void Server_Movement(FVector MovePosition);
+
+	void Movement(FVector MovePosition);
+
+
+	//Attack function
+	UFUNCTION(Reliable, Server, WithValidation)
+	void Server_Attack(const FString& WeaponName, FVector AttackPosition);
+
+	void Attack(FString WeaponName, FVector AttackPosition);
+
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Type")
+	TSubclassOf<ASmallMunition> SmallMunitionClass;
 
 	//Called by Server movement and vicaversa
 	ACube_TheBattleMasterPawn* MyPawn;
 	void SetOwningPawn(ACube_TheBattleMasterPawn * NewOwner);
 
-	void Movement(FVector MovePosition);
+
 
 	ACube_TheBattleMasterGameMode* BaseGameMode;
 
@@ -113,6 +146,8 @@ public:
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
+
+	FORCEINLINE class UAttachmentComponent* GetAttachComponent() const { return AttachmentComponent; }
 
 	/** Returns Camera subobject **/
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }

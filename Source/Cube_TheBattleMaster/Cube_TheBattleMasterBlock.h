@@ -42,9 +42,13 @@ public:
 	UPROPERTY()
 	class UMaterialInstance* RedMaterial;
 
-	/** Pointer to red material used on active blocks */
+	/** Pointer to yellow material used on active blocks */
 	UPROPERTY()
 	class UMaterialInstance* YellowMaterial;
+
+	/** Pointer to pathing material used on active blocks */
+	UPROPERTY()
+	class UMaterialInstance* PathMaterial;
 
 	/** Grid that owns us */
 	UPROPERTY()
@@ -61,10 +65,13 @@ public:
 
 	void CanMove(bool bOn);
 
-	void CanAttack(bool bOn);
+	void CanAttack(bool bOn, bool bImmutable);
 
 	void ToggleOccupied(bool bOn);
 
+	void HighlightPath(bool bOn);
+
+	
 	
 
 	//UFUNCTION(Server, Reliable)
@@ -80,6 +87,8 @@ public:
 	bool bMove = false;
 
 	bool bAttack = false;
+
+	bool bIsPath = false; 
 
 public:
 	/** Returns DummyRoot subobject **/
