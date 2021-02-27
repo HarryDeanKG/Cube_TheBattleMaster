@@ -25,6 +25,8 @@ public:
 	UAttachmentComponent();
 
 public:
+	UFUNCTION(BlueprintImplementableEvent)
+	void test();
 
 	UFUNCTION(BlueprintCallable)
 	void Equip(AItemBase* Item, FName SocketName);
@@ -51,6 +53,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = true, BlueprintNativeEvent)
 	void GetCurrentAmmo(EAmmunitionType Type, int32& int_Ammo);
 
+	
 	void SetEquipedWeapon(AItemBase*  Item, FName SocketName);
 
 	void ClearEquipedWeapon(AItemBase* Item, FName SocketName);

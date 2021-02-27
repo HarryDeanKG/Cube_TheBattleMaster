@@ -10,7 +10,7 @@
 
 ACube_TheBattleMasterBlockGrid::ACube_TheBattleMasterBlockGrid()
 {
-	SetReplicates(true);
+	SetReplicates(false);
 	
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));

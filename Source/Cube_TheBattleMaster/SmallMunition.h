@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/CapsuleComponent.h"
+
 #include "SmallMunition.generated.h"
 
 UCLASS()
@@ -31,29 +32,9 @@ protected:
 	//Called on construction
 	virtual void OnConstruction(const FTransform & Transform) override;
 
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
-	FVector Velocity = FVector(100.f);
-
-	FVector FinalPosition;
-
-	float Speed;
-
-	UPROPERTY(Replicated, EditAnywhere)
-	FVector Direction= FVector(0.f);
-
-	FVector Position;
-
-	//UFUNCTION()
-	//void BeginOverlap( AActor* OverlappedActor, AActor* OtherActor );
-
-	//UFUNCTION()
-	//void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-public:
 	UFUNCTION()
 	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -61,6 +42,26 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Trigger Capsule")
 	class UCapsuleComponent* TriggerCapsule;
 
+	//UFUNCTION()
+	//void BeginOverlap( AActor* OverlappedActor, AActor* OtherActor );
+
+	//UFUNCTION()
+	//void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+public:	
+
+	//Set the variables used in calculations
+	/*UPROPERTY(EditAnywhere)
+	FVector Velocity = FVector(100.f);*/
+
+	FVector StartPosition;
+	float StartTime;
+
+	//Properties of the projectile
+	float Speed;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector Direction= FVector(0.f);
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }

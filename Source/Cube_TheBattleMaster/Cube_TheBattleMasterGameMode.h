@@ -51,6 +51,7 @@ public:
 
 	void TakeTurn();
 
+	//float time;
 
 	void EndGameCondition();
 
@@ -60,7 +61,7 @@ public:
 	int32 Players_Ready;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-		bool BeginTheGame();
+	bool BeginTheGame();
 
 };
 

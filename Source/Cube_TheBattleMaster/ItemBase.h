@@ -47,11 +47,12 @@ public:
 	//virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void DoAction(bool bMainPhase, ACube_TheBattleMasterBlock * Block);
+	virtual void DoAction(bool bMainPhase, FVector Direction);
 
 	//This is for highlighting blocks etc...
 	UFUNCTION(BlueprintCallable)
 	virtual void SetActionInMotion();
+
 	//This is for un-highlighting blocks etc...
 	UFUNCTION(BlueprintCallable)
 	virtual void UnSetActionInMotion();
@@ -59,6 +60,9 @@ public:
 	//Does nothing right now but can be used to reset anything that has happend
 	UFUNCTION(BlueprintCallable)
 	virtual void ResetAction();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndAction();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	FString WeaponName = "Weapon Default";
@@ -68,10 +72,17 @@ public:
 	
 	//Movement bools
 	bool bCanBeUsedWithMovement;
-	int32 MovementTicks;
 
+	//How many times it does the action 
+	int ActionItteration;
+
+	// Variables for action range
+	float AttackRange;
+	float AttackRangeMin;
 	//AMMO should be removed
 	int AmmoCurrent;
+	//Decide whether the item has something at the end (Currently only works for 0 itteration items).
+	bool bEndAction;
 
 	EAmmunitionType AmmoType;
 
@@ -88,6 +99,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Slots")
 	void SetSlotName(FName SlotName);
 	
+
+	//Equipment Functions
 	void bEquip(bool bEquip);
 
 	UFUNCTION(BlueprintCallable)
@@ -96,7 +109,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnEquip();
 
-
+	//Attach properties
+	UPROPERTY(BlueprintReadWrite)
 	EAttachPoint CurrentAttachPoint;
 
 	TArray<EAttachPoint> AttachPoints;

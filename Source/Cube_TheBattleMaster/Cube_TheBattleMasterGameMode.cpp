@@ -30,7 +30,7 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 	E_GameSectionEnum = EGameSection::GS_StartSection;
 	//E_GameSectionEnum = EGameSection::GS_MidSection;
 	Game_turn = 200;
-
+	//time = 0.f;
 }
 
 //void ACube_TheBattleMasterGameMode::BeginPlay() {
@@ -43,42 +43,69 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 	
+	//if (ROLE_Authority == GetLocalRole()) {
+	//	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+	//		if (PlayerPawn->MyCube) {					
+	//			FString One = PlayerPawn->MyCube->GetName();
+	//			One.RemoveAt(0, One.Len() - 1);
+	//			FString Two = PlayerPawn->GetName();
+	//			Two.RemoveAt(0, Two.Len() - 1);
+	//			if ( One == Two) {
+	//				//UE_LOG(LogTemp, Warning, TEXT("%d: Player %s has cube %s"), GetLocalRole(), *PlayerPawn->GetName(), *PlayerPawn->MyCube->GetName())
+	//			}
+	//		}
+	//	}
+	//}
+	//time += DeltaSeconds;
+
 	/*Do the actions that are preset*/
+	
 	if (bDoActions) {
-		
-		/*Replace with the timer function that dictates speed etc...*/
-		bNextTurn = true;
-		
-		int i = 0;
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
-			
-			//UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bDoAction ? TEXT("True") : TEXT("False"));
-			if (PlayerPawn->MyCube->bDoAction) { bNextTurn = false; }
-			//UE_LOG(LogTemp, Warning, TEXT("%d: Player %s is ready? %s"), i, *PlayerPawn->MyCube->GetName(), PlayerPawn->MyCube->bMove ? TEXT("True") : TEXT("False"));
-			if (PlayerPawn->MyCube->bMove) { bNextTurn = false; }
-			i++;
-		}
+
 		if (bNextTurn) {
 			for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn){
-				if (doAction > 3) {
-					UE_LOG(LogTemp, Warning, TEXT("test"));
-					//PlayerPawn->ResetEverything(false);
-					bDoActions = false; 
-					PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_SelectActions; 
-					PlayerPawn->MyCube->SetReplicatingMovement(false); 
-					PlayerPawn->ClearVars();
-					PlayerPawn->Reset_Buttons_test();
-					PlayerPawn->bReady = false;
-					PlayerPawn->UpdateActions();
+				
+				if (PlayerPawn->MyCube) {
+					UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+					if (PlayerPawn->M_ActionStructure.Contains(doAction)) {
+						
+						//PlayerPawn->MyCube->InitiateMovementAndAction();
+						PlayerPawn->DoAction(doAction);
+					}
+					UE_LOG(LogTemp, Warning, TEXT("doAction %d"), doAction);
+					if (doAction > 3) {
+						//UE_LOG(LogTemp, Warning, TEXT("test"));
+						//PlayerPawn->ResetEverything(false);
+						bDoActions = false;
+						PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_SelectActions;
+						PlayerPawn->MyCube->SetReplicatingMovement(false);
+						PlayerPawn->bReady = false;
+
+						PlayerPawn->ClearVars();
+						PlayerPawn->Reset_Buttons_test();
+						PlayerPawn->UpdateActions();
+					}
+					else {
+						//UE_LOG(LogTemp, Warning, TEXT("DoAction: %d - %s"), doAction, PlayerPawn->M_ActionStructure.Contains(doAction) ? TEXT("True") : TEXT("False")); 
+						if (PlayerPawn->M_ActionStructure.Contains(doAction)) {
+							PlayerPawn->DoAction(doAction);
+						}
+					}
 				}
-				else {
-					//UE_LOG(LogTemp, Warning, TEXT("DoAction: %d - %s"), doAction, PlayerPawn->M_ActionStructure.Contains(doAction) ? TEXT("True") : TEXT("False")); 
-					if (PlayerPawn->M_ActionStructure.Contains(doAction)) {  
-						PlayerPawn->DoAction(doAction); 
-					} 
-				}
-			}if (!bDoActions) { doAction = 0; E_TurnStateEnum = ETurnState::TS_SelectActions;}
+			}
+			if (!bDoActions) { doAction = 0; E_TurnStateEnum = ETurnState::TS_SelectActions;}
 			else { doAction++; }
+			bNextTurn = false;
+		}
+
+		/*Replace with the timer function that dictates speed etc...*/
+		bNextTurn = true;
+
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+			if (PlayerPawn->MyCube) {
+				if (!PlayerPawn->MyCube->bReady) { bNextTurn = false; }
+				//UE_LOG(LogTemp, Warning, TEXT("Player %s is ready: %s"), *PlayerPawn->GetName(), PlayerPawn->MyCube->bReady ? TEXT("True") : TEXT("False"));
+			}
 		}
 	}
 }
@@ -88,17 +115,29 @@ void ACube_TheBattleMasterGameMode::TakeTurn()
 	if (Game_turn < 1){/* End Game*/ }
 	Players_Ready += 1;
 	if (Players_Ready == GetNumPlayers()) { 
-		//if (E_GameSectionEnum == EGameSection::GS_StartSection) { E_GameSectionEnum = EGameSection::GS_MidSection; }
+		if (E_GameSectionEnum == EGameSection::GS_StartSection) { E_GameSectionEnum = EGameSection::GS_MidSection; }
 		E_TurnStateEnum = ETurnState::TS_InitiateActions;
-		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) { PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_InitiateActions; PlayerPawn->MyCube->SetReplicatingMovement(true);
+		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+			//UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+
+			if (PlayerPawn->MyCube) {
+				PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_InitiateActions;
+				PlayerPawn->MyCube->SetReplicatingMovement(true);
+				UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+
+				UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->MyCube->GetName());
+
+			}
 		}
 
 		Game_turn -= 1; 
 		Players_Ready = 0; 
 
+		doAction = 0;
 		bDoActions = true;
+		bNextTurn = true;
 
-		//E_TurnStateEnum = ETurnState::TS_PreSelection;
+	//	//E_TurnStateEnum = ETurnState::TS_PreSelection;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Game turn: %d"), Game_turn);
 	UE_LOG(LogTemp, Warning, TEXT("Player ready: %d"), Players_Ready);

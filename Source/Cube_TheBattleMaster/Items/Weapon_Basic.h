@@ -14,4 +14,13 @@ class CUBE_THEBATTLEMASTER_API AWeapon_Basic : public AItemBase
 {
 	GENERATED_BODY()
 	
+public:
+
+	AWeapon_Basic();
+
+	virtual void SetActionInMotion() override;
+
+	virtual void UnSetActionInMotion() override;
+
+	void HighlightBlocks(bool bHighlight);
 };

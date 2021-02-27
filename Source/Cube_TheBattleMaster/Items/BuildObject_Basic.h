@@ -26,11 +26,11 @@ public:
 	
 	//void MakeTheWall(FVector Location);
 
-	void MakeTheWall(ACube_TheBattleMasterBlock * Block, bool bMainPhase);
+	void MakeTheWall(FVector  Direction, bool bMainPhase);
 
 	
 
-	virtual void DoAction(bool bMainPhase, ACube_TheBattleMasterBlock * Block) override;
+	virtual void DoAction(bool bMainPhase, FVector Direction) override;
 
 	virtual void SetActionInMotion() override;
 

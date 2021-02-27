@@ -53,18 +53,26 @@ public:
 
 	void UpdateActionList(TMap<FString, FString>& OutMap);
 
+	void InitiateMovementAndAction();
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	float time = 0.0f;
-	float ActionTimer = 5.0f;
+	float ActionTimer = 6.0f;
 
-	UPROPERTY(Replicated)
+	//UPROPERTY(Replicated)
 	bool bDoAction = false;
 
-	UPROPERTY(BlueprintReadWrite)
-	bool bReady = false;
+	bool bActionInitilize = false;
+	float DoActionAtTime;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bReady;
+
+	//UPROPERTY(Replicated)
 	bool bMove=false;
+	
+
 	bool bHasMoved = false;
 	FVector StartPosition = FVector(0.0f);
 	FVector CurrentPosition;
@@ -79,19 +87,22 @@ public:
 
 	//Attack function
 	UFUNCTION(Reliable, Server, WithValidation)
-	void Server_Attack(const FString& WeaponName, FVector AttackPosition);
+	void Server_Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition);
 
-	void Attack(FString WeaponName, FVector AttackPosition);
+	void Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition);
+
+	void EndAction(AItemBase * Item);
 
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Type")
 	TSubclassOf<ASmallMunition> SmallMunitionClass;
 
 	//Called by Server movement and vicaversa
-	ACube_TheBattleMasterPawn* MyPawn;
+	//UPROPERTY(Replicated)
+	ACube_TheBattleMasterPawn* MyPawn ;
 	void SetOwningPawn(ACube_TheBattleMasterPawn * NewOwner);
 
-
+	
 
 	ACube_TheBattleMasterGameMode* BaseGameMode;
 
@@ -107,6 +118,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	int32 Base_Speed=4;
+
 
 	UPROPERTY(EditAnywhere)
 	int32 AttackRange = 7;

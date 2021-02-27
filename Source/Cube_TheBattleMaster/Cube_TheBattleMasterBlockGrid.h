@@ -43,6 +43,8 @@ public:
 
 	TArray<FVector2D> StartPositions;
 
+
+
 protected:
 	// Begin AActor interface
 	virtual void BeginPlay() override;

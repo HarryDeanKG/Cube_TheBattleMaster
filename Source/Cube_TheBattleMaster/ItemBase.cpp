@@ -12,6 +12,8 @@ AItemBase::AItemBase()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	bReplicates = true;
+
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
 	//DummyRoot->SetIsReplicated(true);
@@ -30,17 +32,25 @@ AItemBase::AItemBase()
 	//BlockMesh->SetMaterial(0, ConstructorStatics.BaseMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
 
-	
-
+	AttackRange = 7.f;
+	AttackRangeMin = 7.f;
+	ActionItteration = 1;
+	bEndAction = false;
 }
 
 // Called when the game starts or when spawned
 void AItemBase::BeginPlay()
 {
 	Super::BeginPlay();
+	//Required for character creation
 
-	APlayer_Cube* Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube;
-	Cube->GetAttachComponent()->AddToInventory(this);
+
+	UE_LOG(LogTemp, Warning, TEXT("Owner Is %s"), *GetOwner()->GetName());
+	if (Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube) {
+		APlayer_Cube* Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube;
+
+		Cube->GetAttachComponent()->AddToInventory(this);
+	}
 }
 
 void AItemBase::SetSlotName(FName SlotName)
@@ -90,23 +100,33 @@ void AItemBase::UnEquip()
 }
 
 
-void AItemBase::DoAction(bool bMainPhase, ACube_TheBattleMasterBlock* Block){
+void AItemBase::DoAction(bool bMainPhase, FVector Direction){
 	UE_LOG(LogTemp, Warning, TEXT("Default Action for %s"), *GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Number!!!: %d"), GetLocalRole());
 
-	const FRotator SpawnRotation = FRotator(0, 0, 0);
+	/*const FRotator SpawnRotation = GetActorRotation();
 
 	const FVector SpawnLocation = GetActorLocation();
-	ASmallMunition* Bullet = GetWorld()->SpawnActor<ASmallMunition>(SmallMunitionClass, SpawnLocation, FRotator(0, 0, 0));
+	ASmallMunition* Bullet = GetWorld()->SpawnActor<ASmallMunition>(SmallMunitionClass, SpawnLocation, SpawnRotation);
 
 	Bullet->SetOwner(GetOwner());
 	Bullet->SetReplicates(bMainPhase);
-	Bullet->Direction = Block->GetActorLocation();
+	Bullet->Direction = Direction;
 
+	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
+	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, false, AttackRangeMin, AttackRange, false);*/
+
+}
+
+void AItemBase::EndAction()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Action has ended!"));
 }
 
 void AItemBase::SetActionInMotion()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Default SetAction"));
+	
 }
 
 void AItemBase::UnSetActionInMotion()

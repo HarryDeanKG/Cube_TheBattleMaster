@@ -29,6 +29,16 @@ struct FAction_Struct
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector MovementDuringAction = FVector(0.f);;
+
+	UPROPERTY()
+	AActor* SelectedActor = nullptr;
+
+	UPROPERTY()
+	FVector SecondSelectedPosition = FVector(0.f);
+
+
+
+
 };
 
 UCLASS(config=Game)
@@ -60,6 +70,11 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	class ACube_TheBattleMasterBlock* CurrentBlockFocus;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
+	class UStaticMeshComponent* CurrentMeshFocus;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
+	class AActor* CurrentActorFocus;
 
 	UFUNCTION(BlueprintCallable) void OnRep_MyCube();
 	UPROPERTY(Transient, BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_MyCube)
@@ -111,7 +126,7 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(EditAnyWhere)
 	ACube_TheBattleMasterBlock* StartingBlock;
 
-	void SetAction(FString ActionName, ACube_TheBattleMasterBlock * Block);
+	void SetAction(FString ActionName, FVector Direction);
 
 	/*Called to initiate what action is to be done*/
 	void DoAction(int int_Action);
@@ -120,16 +135,14 @@ class ACube_TheBattleMasterPawn : public APawn
 
 	//void AttackAction(ACube_TheBattleMasterPawn* Pawn, FString Name, FVector AttackDirection, bool bAction);
 
-
 	void Test();
-
 
 	UFUNCTION()
 	ACube_TheBattleMasterBlockGrid* GetGrid();
 
 	ACube_TheBattleMasterBlock * GetBlockFromPosition(FVector Direction);
 
-
+	UPROPERTY(BlueprintReadWrite)
 	ACube_TheBattleMasterBlockGrid* MyGrid;
 
 
@@ -141,6 +154,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetInMotionSelectedAction(AItemBase * dummyItem);
 
+
 	void ClearVars();
 
 	UFUNCTION(BlueprintCallable)
@@ -148,6 +162,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void NoAction();
+
 
 	void ResetEverything(bool bResetPosition);
 
@@ -159,6 +174,12 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Ready_Button();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Confirmation_Button();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void Confirmation_Button_Active(bool bOn);
 
 	FString String_Action;
 
@@ -179,7 +200,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void Waiting();
 
-	//virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
 
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -212,27 +233,16 @@ public:
 	void Server_ToggleOccupied(ACube_TheBattleMasterBlock * Block, bool Bon);
 
 	void HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
-
-	UFUNCTION(Reliable, Server)
-	void Server_HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
 	
-	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int distance, bool bAttackImmutables);
-
-	UFUNCTION(Reliable, Server)
-	void Server_HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int distance, bool bAttackImmutables);
+	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int minDistance, int maxDistance, bool bAttackImmutables);
 
 	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle, bool bAttackImmutables);
-
-
-protected:
-
-
-	
-
 
 	void Highlight_Path(ACube_TheBattleMasterBlock * Start, ACube_TheBattleMasterBlock * End);
 
 	void Highlight_PathBlock(int32 X, int32 Y);
+
+protected:
 
 	void TriggerClick();
 
@@ -251,8 +261,38 @@ protected:
 
 	/*UFUNCTION(Client, Reliable)
 	void Client_TriggerClick();*/
+public:
+	bool bCrossHair = false;
+	bool bArrow = false;
 
-	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
+	FVector ArrowEnd;
+	float rangeEnd = 0.f;
+
+	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers, bool bHighlight);
+
+	void HighlightAnActorNotABlock(const FVector & Start, const FVector & End);
+
+	void TraceForCrosshair(const FVector & Start, const FVector & End, bool bDrawDebugHelpers);
+	FVector AttackDirection;
+	
+	void TraceForArrow(FVector Start, const FVector& End, bool bDrawDebugHelpers);
+
+	UPROPERTY(Category = Trace, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* ArrowMesh;
+
+	UPROPERTY(Category = Trace, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* RadiusMesh;
+
+	/** Pointer to white material used on the focused block */
+	UPROPERTY()
+	class UMaterial* BaseMaterial;
+
+	/*UPROPERTY()
+	class UMaterialInstance* RadiusMaterial;*/
+
+protected:
+	UPROPERTY()
+	class UMaterialInstanceDynamic* DynamicBaseMaterial;
 
 	void DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube);
 

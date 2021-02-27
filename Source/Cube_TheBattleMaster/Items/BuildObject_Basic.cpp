@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "../Cube_TheBattleMasterPawn.h"
 #include "BuildObject_Basic.h"
+#include "../Cube_TheBattleMasterPawn.h"
 
 ABuildObject_Basic::ABuildObject_Basic() {
 
@@ -43,15 +43,18 @@ ABuildObject_Basic::ABuildObject_Basic() {
 	ActionName = "Build Wall";
 
 	bCanBeUsedWithMovement = false;
+
+	AttackRange = 1;
 }
 
-void ABuildObject_Basic::MakeTheWall(ACube_TheBattleMasterBlock* Block, bool bMainPhase) {
+void ABuildObject_Basic::MakeTheWall(FVector Direction, bool bMainPhase) {
 
 	const FRotator SpawnRotation = FRotator(0.f, 0.f, 0.f);
 
 	const FVector SpawnLocation = FVector(0.f);
 	
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
+	ACube_TheBattleMasterBlock* Block = PlayerPawn->GetBlockFromPosition(Direction);
 
 	AWall_Actor* Wall;
 	if (WallClass) {
@@ -74,8 +77,8 @@ void ABuildObject_Basic::MakeTheWall(ACube_TheBattleMasterBlock* Block, bool bMa
 	);
 
 	//FAttachmentTransformRules::SnapToTargetIncludingScale
-	FVector Direction =  Block->GetActorLocation() - PlayerPawn->MyCube->GetActorLocation();
-	Wall->AttachToSelect(Block->GetBlockMesh(), Trans, FindCorrectSlot(Direction));
+	FVector Dir =  Direction - PlayerPawn->MyCube->GetActorLocation();
+	Wall->AttachToSelect(Block->GetBlockMesh(), Trans, FindCorrectSlot(Dir));
 	
 	if (!bMainPhase) {
 		Wall->bTemporary = true;
@@ -84,20 +87,25 @@ void ABuildObject_Basic::MakeTheWall(ACube_TheBattleMasterBlock* Block, bool bMa
 		Block->ToggleOccupied(true);
 	} else{ 
 		Wall->bTemporary = false; 
-		Block->ToggleOccupied(true);
+		Wall->SetReplicates(true);
+		//All blocks need to be toggled here
+		for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
+			Pawn->GetBlockFromPosition(Block->GetActorLocation())->ToggleOccupied(true);
+		}
+			
+		//Block->ToggleOccupied(true);
 	}
 }
 
-void ABuildObject_Basic::DoAction(bool bMainPhase, ACube_TheBattleMasterBlock* Block) {
-	UE_LOG(LogTemp, Warning, TEXT("TestWallAction!!"));
-	MakeTheWall(Block, bMainPhase);
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-
-	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, false, 1, false);
+void ABuildObject_Basic::DoAction(bool bMainPhase, FVector Direction) {
+	
+	MakeTheWall(Direction, bMainPhase);
+	HighlightBlocks(false);
 }
 
 void ABuildObject_Basic::ResetAction() {
-
+	UE_LOG(LogTemp, Warning, TEXT("Reset wall"));
+	
 	for (TObjectIterator<AWall_Actor> Elems; Elems; ++Elems) {
 		if (Elems->bTemporary) {
 			Elems->Destroy();
@@ -105,23 +113,15 @@ void ABuildObject_Basic::ResetAction() {
 	}
 }
 
-void ABuildObject_Basic::SetActionInMotion() {
-	//Super::SetActionInMotion();
-	UE_LOG(LogTemp, Warning, TEXT("Wall Action!!"));
+void ABuildObject_Basic::SetActionInMotion() { HighlightBlocks(true); }
 
-	HighlightBlocks(true);
-}
-
-void ABuildObject_Basic::UnSetActionInMotion() {
-
-	HighlightBlocks(false);
-}
+void ABuildObject_Basic::UnSetActionInMotion() { HighlightBlocks(false); }
 
 
 void ABuildObject_Basic::HighlightBlocks(bool bHighlight) {
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
 	
-	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, 1, false);
+	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, AttackRange, AttackRange, false);
 }
 
 FName ABuildObject_Basic::FindCorrectSlot(FVector Direction) {
