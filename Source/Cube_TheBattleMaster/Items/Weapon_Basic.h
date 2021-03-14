@@ -22,5 +22,6 @@ public:
 
 	virtual void UnSetActionInMotion() override;
 
+
 	void HighlightBlocks(bool bHighlight);
 };

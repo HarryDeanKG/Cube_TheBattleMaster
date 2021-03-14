@@ -38,7 +38,5 @@ public:
 
 	void HighlightBlocks(bool bHighlight);
 
-	/** Pointer to white material used on the focused block */
-	UPROPERTY()
-	class UMaterial* BaseMaterial;
+
 };

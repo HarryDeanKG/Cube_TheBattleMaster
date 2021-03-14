@@ -262,6 +262,7 @@ protected:
 	/*UFUNCTION(Client, Reliable)
 	void Client_TriggerClick();*/
 public:
+	UPROPERTY(BlueprintReadWrite)
 	bool bCrossHair = false;
 	bool bArrow = false;
 
@@ -272,7 +273,8 @@ public:
 
 	void HighlightAnActorNotABlock(const FVector & Start, const FVector & End);
 
-	void TraceForCrosshair(const FVector & Start, const FVector & End, bool bDrawDebugHelpers);
+	UFUNCTION()
+	void TraceForCrosshair(const FVector & Start, const FVector & End, bool bToggleOn);
 	FVector AttackDirection;
 	
 	void TraceForArrow(FVector Start, const FVector& End, bool bDrawDebugHelpers);
@@ -282,6 +284,10 @@ public:
 
 	UPROPERTY(Category = Trace, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* RadiusMesh;
+
+	UPROPERTY(Category = Trace, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	class UInstancedStaticMeshComponent* Ring;
+	
 
 	/** Pointer to white material used on the focused block */
 	UPROPERTY()

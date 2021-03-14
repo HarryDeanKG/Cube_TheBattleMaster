@@ -57,7 +57,5 @@ public:
 
 	TArray<AShieldSegment*> T_HiddenShieldSegments;
 
-	/** Pointer to white material used on the focused block */
-	UPROPERTY()
-	class UMaterial* BaseMaterial;
+
 };

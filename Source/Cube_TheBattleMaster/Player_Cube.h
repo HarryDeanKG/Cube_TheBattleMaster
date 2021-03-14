@@ -57,6 +57,8 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	void DoTheAction();
+
 	float time = 0.0f;
 	float ActionTimer = 6.0f;
 
@@ -87,9 +89,9 @@ public:
 
 	//Attack function
 	UFUNCTION(Reliable, Server, WithValidation)
-	void Server_Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition);
+	void Server_Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector AttackPosition);
 
-	void Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition);
+	void Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector AttackPosition);
 
 	void EndAction(AItemBase * Item);
 

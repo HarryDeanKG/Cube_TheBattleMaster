@@ -44,10 +44,5 @@ public:
 
 	FName FindCorrectSlot(FVector Direction);
 
-
-	/** Pointer to white material used on the focused block */
-	UPROPERTY()
-	class UMaterial* BaseMaterial;
-
 };
 

@@ -9,21 +9,21 @@
 
 AShield_Basic::AShield_Basic() {
 
-	struct FConstructorStatics
-	{
-		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
-		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
-		FConstructorStatics()
-			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
-			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
-		{
-		}
-	};
-	static FConstructorStatics ConstructorStatics;
+	//struct FConstructorStatics
+	//{
+	//	ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+	//	ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
+	//	FConstructorStatics()
+	//		: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+	//		, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
+	//	{
+	//	}
+	//};
+	//static FConstructorStatics ConstructorStatics;
 
-	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
+	//BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 
-	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
+	//BaseMaterial = ConstructorStatics.BaseMaterial.Get();
 
 	WeaponName = "Shield";
 
@@ -151,8 +151,9 @@ void AShield_Basic::MakeShield(bool bIsReplicating)
 	APlayer_Cube* Cube = PlayerPawn->MyCube;
 
 	AShieldSegment* ShieldSegment;
-	FRotator SpawnRotation = FRotator(0.f);
-	FVector SpawnLocation = FVector(0.f, 0.f, 200.f);
+	
+	FRotator SpawnRotation = FRotator(-90.f, 0.f, 0.f);
+	FVector SpawnLocation = FVector(100.f, 0.f, 0.f);
 	FAttachmentTransformRules Trans = FAttachmentTransformRules
 	(
 		EAttachmentRule::KeepRelative,

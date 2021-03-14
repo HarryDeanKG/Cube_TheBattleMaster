@@ -109,11 +109,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnEquip();
 
+	UFUNCTION()
+	virtual bool IsInRange(AActor* SelectedActor);
+
 	//Attach properties
 	UPROPERTY(BlueprintReadWrite)
 	EAttachPoint CurrentAttachPoint;
 
 	TArray<EAttachPoint> AttachPoints;
 
+	UPROPERTY(BlueprintReadWrite)
+	FVector OutwardLocation;
+	/** Pointer to white material used on the focused block */
+	UPROPERTY()
+	class UMaterial* BaseMaterial;
+
+	/** Returns BlockMesh subobject **/
+	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
 
 };

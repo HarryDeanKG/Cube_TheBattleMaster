@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Materials/MaterialInstance.h"
 #include "GameFramework/GameStateBase.h"
+//#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 APlayer_Cube::APlayer_Cube()
@@ -251,24 +252,20 @@ void APlayer_Cube::Tick(float DeltaSeconds)
 
 			if (MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item->ActionItteration != 0) {
 				if (roundf(time*10)/10  == DoActionAtTime + 0.5) {
-					Attack(MyPawn, MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item,
-						MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Action_Position + this->GetActorLocation());
+					DoTheAction();
 
 					DoActionAtTime = DoActionAtTime * 2;
 					if (DoActionAtTime >= ActionTimer) { bDoAction = false;/* EndAction(MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item);*/}
 				}
 			}
 			else {
-				Attack(MyPawn, MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item,
-					MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Action_Position + this->GetActorLocation());
+				DoTheAction();
 				bDoAction = false;
 			}
 		}
 		else if (E_TurnStateEnum == ETurnState::TS_SelectActions) {
-			Attack(MyPawn, MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item,
-				MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Action_Position + this->GetActorLocation());
+			DoTheAction();
 			bDoAction = false;
-
 		}
 	}
 	
@@ -287,6 +284,24 @@ void APlayer_Cube::Tick(float DeltaSeconds)
 	time += DeltaSeconds; 
 }
 
+void APlayer_Cube::DoTheAction() {
+	if (MyPawn->M_ActionStructure[MyPawn->DoActionNumb].SelectedActor){
+		UE_LOG(LogTemp, Warning, TEXT("Is %s in Range? %s"), *MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item->GetName(), MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item->IsInRange(MyPawn->M_ActionStructure[MyPawn->DoActionNumb].SelectedActor) ? TEXT("True") : TEXT("False"));
+		if (MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item->IsInRange(MyPawn->M_ActionStructure[MyPawn->DoActionNumb].SelectedActor)) {
+			
+			FVector End = MyPawn->M_ActionStructure[MyPawn->DoActionNumb].SelectedActor->GetActorLocation();
+			End.Z = 100.f;
+			UE_LOG(LogTemp, Warning, TEXT("Selected Actor %s"), *End.ToString());
+
+			Attack(MyPawn, MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item, End);
+		}
+	}
+	else {
+		Attack(MyPawn, MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Item,
+			MyPawn->M_ActionStructure[MyPawn->DoActionNumb].Action_Position + this->GetActorLocation());
+	}
+}
+
 void APlayer_Cube::ApplyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	//float Damage = BaseDamage;
@@ -301,7 +316,6 @@ void APlayer_Cube::ApplyDamage(AActor* DamagedActor, float Damage, const class U
 	UE_LOG(LogTemp, Warning, TEXT("DAMAGE!!"));
 
 }
-
 
 void APlayer_Cube::SetOwningPawn(ACube_TheBattleMasterPawn* NewOwner)
 {
@@ -325,19 +339,14 @@ bool APlayer_Cube::Server_Movement_Validate(FVector MovePosition) {	return true;
 
 void APlayer_Cube::Server_Movement_Implementation(FVector MovePosition) { Movement(MovePosition); }
 
-void APlayer_Cube::Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition) {
-	/*bool AttackRep = false;
-	if (E_TurnStateEnum == ETurnState::TS_InitiateActions) { AttackRep = true; }*/
-	if (E_TurnStateEnum == ETurnState::TS_InitiateActions && GetLocalRole() < ROLE_Authority) { Server_Attack(Pawn, Item, BlockPosition); }
-	else
-	{
-		Item->DoAction(true, BlockPosition);
-	}
+void APlayer_Cube::Attack(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector AttackPosition) {
+	if (E_TurnStateEnum == ETurnState::TS_InitiateActions && GetLocalRole() < ROLE_Authority) { Server_Attack(Pawn, Item, AttackPosition); }
+	else { Item->DoAction(true, AttackPosition); }
 }
 
-bool APlayer_Cube::Server_Attack_Validate(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition) { return true; }
+bool APlayer_Cube::Server_Attack_Validate(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector AttackPosition) { return true; }
 
-void APlayer_Cube::Server_Attack_Implementation(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector BlockPosition) { Attack(Pawn, Item, BlockPosition); }
+void APlayer_Cube::Server_Attack_Implementation(ACube_TheBattleMasterPawn* Pawn, AItemBase* Item, FVector AttackPosition) { Attack(Pawn, Item, AttackPosition); }
 
 void APlayer_Cube::EndAction(AItemBase* Item) {
 	UE_LOG(LogTemp, Warning, TEXT("TESTSETSETS"));

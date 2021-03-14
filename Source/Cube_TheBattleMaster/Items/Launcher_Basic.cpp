@@ -5,9 +5,6 @@
 
 ALauncher_Basic::ALauncher_Basic() {
 
-	//// Structure to hold one-time initialization
-
-
 	WeaponName = "Basic Launcher";
 	ActionName = "Directional Launch";
 
@@ -21,11 +18,20 @@ ALauncher_Basic::ALauncher_Basic() {
 void ALauncher_Basic::SetActionInMotion() {
 
 	HighlightBlocks(true);
+
+	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
+	//PlayerPawn->bCrossHair = true;
+
+	//PlayerPawn->ArrowEnd = GetActorLocation();
+	//PlayerPawn->rangeEnd = AttackRange;
+
 }
 
 void ALauncher_Basic::UnSetActionInMotion() {
 
 	HighlightBlocks(false);
+	Cast<ACube_TheBattleMasterPawn>(GetOwner())->bCrossHair = false;
+
 }
 
 

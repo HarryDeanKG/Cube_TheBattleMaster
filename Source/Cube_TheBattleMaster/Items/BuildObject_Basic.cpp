@@ -6,17 +6,17 @@
 ABuildObject_Basic::ABuildObject_Basic() {
 
 	//// Structure to hold one-time initialization
-	struct FConstructorStatics
-	{
-		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
-		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
-		FConstructorStatics()
-			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
-			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
-		{
-		}
-	};
-	static FConstructorStatics ConstructorStatics;
+	//struct FConstructorStatics
+	//{
+	//	ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+	//	ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
+	//	FConstructorStatics()
+	//		: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+	//		, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
+	//	{
+	//	}
+	//};
+	//static FConstructorStatics ConstructorStatics;
 
 	//// Create dummy root scene component
 	////DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
@@ -34,9 +34,9 @@ ABuildObject_Basic::ABuildObject_Basic() {
 	//// Save a pointer to the orange material
 	//BaseMaterial = ConstructorStatics.BaseMaterial.Get();
 
-	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
+	//BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 	
-	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
+	// = ConstructorStatics.BaseMaterial.Get();
 
 	WeaponName = "Build Object";
 

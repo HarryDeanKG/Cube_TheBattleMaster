@@ -14,23 +14,36 @@ AItemBase::AItemBase()
 
 	bReplicates = true;
 
+	//// Structure to hold one-time initialization
+	struct FConstructorStatics
+	{
+		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
+		FConstructorStatics()
+			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/ItemCube.ItemCube"))
+			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
+		{
+		}
+	};
+	static FConstructorStatics ConstructorStatics;
+	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
+
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
 	//DummyRoot->SetIsReplicated(true);
 	RootComponent = DummyRoot;
 
-	//Create Attack component
-	//AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("BlockAttackComeponent0"));
-	//AttackComponent->SetupAttachment(DummyRoot);
-
 	// Create static mesh component
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh0"));
 	//BlockMesh->SetIsReplicated(true);
-	//BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
+	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 	BlockMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
-	BlockMesh->SetRelativeLocation(FVector(0.f, 0.f, 25.f));
-	//BlockMesh->SetMaterial(0, ConstructorStatics.BaseMaterial.Get());
-	BlockMesh->SetupAttachment(DummyRoot);
+	BlockMesh->SetRelativeLocation(FVector(30.f, 0.f, 0.f));
+	//BlockMesh->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
+	BlockMesh->SetMaterial(0, ConstructorStatics.BaseMaterial.Get());
+	BlockMesh->SetupAttachment(DummyRoot);	
+
+	OutwardLocation = BlockMesh->GetSocketLocation("S_Outward") * 0.25;
 
 	AttackRange = 7.f;
 	AttackRangeMin = 7.f;
@@ -69,10 +82,10 @@ void AItemBase::bEquip(bool bEquip)
 			EAttachmentRule::KeepRelative,
 			EAttachmentRule::KeepRelative,
 			true
-		);
-		AttachToComponent(Cube->GetBlockMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, EquipSocketName);
+		);//FAttachmentTransformRules::SnapToTargetIncludingScale
+		AttachToComponent(Cube->GetBlockMesh(), Trans , EquipSocketName);
 		//Cube->M_SlotsRefference.Add(this->GetName(), this);
-		Cube->M_SlotsRefference.Add(this->WeaponName, this);
+		Cube->M_SlotsRefference.Add(this->WeaponName, this); 
 	}
 	else {
 		FDetachmentTransformRules Trans = FDetachmentTransformRules
@@ -99,6 +112,11 @@ void AItemBase::UnEquip()
 	bEquip(false);
 }
 
+bool AItemBase::IsInRange(AActor* SelectedActor) {
+	//Takes the actor and decides whether the item can reach it or not
+	UE_LOG(LogTemp, Warning, TEXT("Default in range"));
+	return false;
+}
 
 void AItemBase::DoAction(bool bMainPhase, FVector Direction){
 	UE_LOG(LogTemp, Warning, TEXT("Default Action for %s"), *GetName());

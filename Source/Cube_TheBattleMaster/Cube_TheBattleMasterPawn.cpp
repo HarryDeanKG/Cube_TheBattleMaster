@@ -31,21 +31,31 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	struct FConstructorStatics
 	{
 		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> RingMesh;
 		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> BasicPlaneMesh;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BaseMaterial;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> PathMakerMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> RadiusMaterial;
 		FConstructorStatics()
 			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/Cylinder_pivotBottom.Cylinder_pivotBottom"))
+			//, RingMesh(TEXT("/Game/Puzzle/Meshes/SM_PathMarker.SM_PathMarker"))
+			, RingMesh(TEXT("/Game/Puzzle/Meshes/Cylinder_pivotBottom.Cylinder_pivotBottom"))
 			, BasicPlaneMesh(TEXT("/Game/Puzzle/Meshes/BasicPlaneMesh.BasicPlaneMesh"))
 			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/RedMaterial.RedMaterial"))
+			, PathMakerMaterial(TEXT("/Game/Puzzle/Meshes/OrangeMaterial_NoLighting.OrangeMaterial_NoLighting"))
 			, RadiusMaterial(TEXT("/Game/Puzzle/Meshes/RadiusMaterial_Inst.RadiusMaterial_Inst"))
 		{
 		}
 	};
 	static FConstructorStatics ConstructorStatics;
 
+	//Set up a dummy root system
+	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
+	RootComponent = DummyRoot;
+
 	ArrowMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ArrowMesh0"));
 	//BlockMesh->SetIsReplicated(true);
+	ArrowMesh->SetupAttachment(DummyRoot);
 	ArrowMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 	ArrowMesh->SetWorldScale3D(FVector(0.5f, 0.5f, 0.5f));
 	//ArrowMesh->SetRelativeLocation(FVector(0.f, 0.f, 25.f));
@@ -54,15 +64,23 @@ ACube_TheBattleMasterPawn::ACube_TheBattleMasterPawn(const FObjectInitializer& O
 	
 	RadiusMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RadiusMesh0"));
 	//BlockMesh->SetIsReplicated(true);
+	RadiusMesh->SetupAttachment(DummyRoot);
 	RadiusMesh->SetStaticMesh(ConstructorStatics.BasicPlaneMesh.Get());
 	RadiusMesh->SetWorldScale3D(FVector(0.5f, 0.5f, 0.5f));
 	RadiusMesh->SetMaterial(0, ConstructorStatics.RadiusMaterial.Get());
 	RadiusMesh->SetVisibility(false);
 
+	
+	Ring = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("RingMesh0"));
+	//Ring->RegisterComponent();
+	Ring->SetupAttachment(DummyRoot);
+	Ring->SetStaticMesh(ConstructorStatics.RingMesh.Get());
+	Ring->SetMaterial(0, ConstructorStatics.PathMakerMaterial.Get());
+	Ring->SetCastShadow(false);
+	Ring->SetCollisionProfileName(FName("NoCollision"));
+	//Ring->SetVisibility(false);
 
-	//Set up a dummy root system
-	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
-	RootComponent = DummyRoot;
+
 
 
 	//Create camera components
@@ -281,7 +299,7 @@ void ACube_TheBattleMasterPawn::BeginPlay()
 
 	DynamicBaseMaterial = RadiusMesh->CreateDynamicMaterialInstance(0, BaseMaterial);
 
-
+	//Obj = GetWorld()->SpawnActor<AActor>(FVector(0.f), FRotator(0.f));
 	/*int i = 0;
 	int32 Stoploop = 1;
 	for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid; Grid; ++Grid) 
@@ -343,10 +361,8 @@ void ACube_TheBattleMasterPawn::Tick(float DeltaSeconds)
 		if (bArrow)	{ TraceForArrow(Start, Dir, false);	}
 		else if (ArrowMesh->IsVisible()) { ArrowMesh->SetVisibility(false); RadiusMesh->SetVisibility(false); }
 		//If we want some sort of circle to represent attack range ... do that
-		/*if (bCrossHair && 0.f != rangeEnd)
-		{
-			TraceForCrosshair(Start, End, false);
-		}*/
+		if (bCrossHair)	{ TraceForCrosshair(Start, End, true); }
+		//else { TraceForCrosshair(Start, End, false); }
 		
 		//UE_LOG(LogTemp, Warning, TEXT("barrow %s, bcrosshair %s"), bArrow ? TEXT("True") : TEXT("False"), bCrossHair ? TEXT("True") : TEXT("False"));
 	}
@@ -955,7 +971,7 @@ void ACube_TheBattleMasterPawn::HighlightAnActorNotABlock(const FVector& Start, 
 	
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
 
-	//ToDo* not if its a block!
+	//Don't hit the block!
 	if (HitResult.Actor.Get() != CurrentBlockFocus) {
 		if (HitResult.Component != CurrentMeshFocus && HitResult.Actor.Get() != MyCube)
 		{
@@ -983,9 +999,6 @@ void ACube_TheBattleMasterPawn::HighlightAnActorNotABlock(const FVector& Start, 
 
 void ACube_TheBattleMasterPawn::TraceForArrow(FVector Start, const FVector& Direction, bool bDrawDebugHelpers)
 {
-	//TODO Highlight if in the green area
-	HighlightAnActorNotABlock(Start, Start + (Direction * 8000.0f));
-
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
 
@@ -1007,30 +1020,33 @@ void ACube_TheBattleMasterPawn::TraceForArrow(FVector Start, const FVector& Dire
 	float Dis;
 	float angle = (End - SelectedItem->GetActorLocation()).Rotation().Yaw;
 
-	//if (FMath::IsWithinInclusive(angle, SelectedItem->GetActorRotation().Roll - 30.f, SelectedItem->GetActorRotation().Roll + 30.f)) {
+	//UE_LOG(LogTemp, Warning, TEXT("angle: %f, in: %f, out: %f"), angle, SelectedItem->GetActorRotation().Pitch * 2 + SelectedItem->GetActorRotation().Yaw - 30.f, SelectedItem->GetActorRotation().Pitch * 2 + SelectedItem->GetActorRotation().Yaw + 30.f);
+
+	//This may need to be changed, I think the +-180 kills this
+	if (FMath::IsWithinInclusive(angle, SelectedItem->GetActorRotation().Pitch * 2 + SelectedItem->GetActorRotation().Yaw - 30.f, SelectedItem->GetActorRotation().Pitch * 2 + SelectedItem->GetActorRotation().Yaw + 30.f)) {
+		
+		HighlightAnActorNotABlock(Start, Start + (Direction * 8000.0f));
 		if (HitResult.Actor.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *HitResult.Actor->GetName());
 			Dis = FVector::Dist2D(HitResult.Actor->GetActorLocation(), SelectedItem->GetActorLocation()) / 200;
-
 			
 			//HitResult.Component->SetRenderCustomDepth(true);
 		}
 		else {
 			Dis = FVector::Dist2D(End, SelectedItem->GetActorLocation()) / 200;
 		}
-	//}
-	//else{
-	//	Dis = rangeEnd;
-	//}
+	}
+	else{
+		Dis = rangeEnd;
+	}
 
 	Dis = FMath::Clamp(Dis, 0.f, rangeEnd);
-	angle = UKismetMathLibrary::ClampAngle(angle, 90 + SelectedItem->GetActorRotation().Pitch + SelectedItem->GetActorRotation().Yaw - 30.f, 90 + SelectedItem->GetActorRotation().Pitch + SelectedItem->GetActorRotation().Yaw + 30.f);
+	angle = UKismetMathLibrary::ClampAngle(angle, SelectedItem->GetActorRotation().Pitch*2 + SelectedItem->GetActorRotation().Yaw - 30.f,  SelectedItem->GetActorRotation().Pitch*2 + SelectedItem->GetActorRotation().Yaw + 30.f);
 	FRotator Dir = FRotator(-90.f, angle, 0.f);
 	
-
 	AttackDirection = UKismetMathLibrary::CreateVectorFromYawPitch(angle, 0.f, Dis)+ SelectedItem->GetActorLocation();
-//	UE_LOG(LogTemp, Warning, TEXT("angles: %s, direction: %s, Actor: %s"), *test.ToString(), *AttackDirection.ToString(), *SelectedItem->GetActorLocation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("direction: %s, Actor: %s"), *AttackDirection.ToString(), *SelectedItem->GetActorRotation().ToString());
 
 
 	ArrowMesh->SetRelativeScale3D(FVector(0.05f, 0.05f, Dis));
@@ -1047,18 +1063,104 @@ void ACube_TheBattleMasterPawn::TraceForArrow(FVector Start, const FVector& Dire
 	DynamicBaseMaterial->SetScalarParameterValue("CutOff", 0.9f);
 	DynamicBaseMaterial->SetScalarParameterValue("InnerRadius", 0.f);
 	DynamicBaseMaterial->SetScalarParameterValue("OuterRadius", 0.8f);
-	DynamicBaseMaterial->SetScalarParameterValue("StartingAngle", (90+SelectedItem->GetActorRotation().Pitch + SelectedItem->GetActorRotation().Roll*2+30) / 360.f);
+	DynamicBaseMaterial->SetScalarParameterValue("StartingAngle", (-SelectedItem->GetActorRotation().Yaw+ SelectedItem->GetActorRotation().Pitch*2+30) / 360.f);
 }
 
-void ACube_TheBattleMasterPawn::TraceForCrosshair(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
+void ACube_TheBattleMasterPawn::TraceForCrosshair(const FVector& Start, const FVector& End, bool bToggleOn)
 {
 	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-	if (bDrawDebugHelpers)
-	{
-		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red);
-		DrawDebugSolidBox(GetWorld(), HitResult.Location, FVector(20.0f), FColor::Red);
+
+	TArray<AActor*> IgnorList;
+	IgnorList.Add(MyCube);
+	IgnorList.Add(SelectedItem);
+	
+
+	FVector StartPosition = SelectedItem->GetActorLocation() + SelectedItem->GetActorForwardVector() * 15.f;
+	StartPosition.Z = 0.f;
+	FVector EndPosition;
+	if (CurrentBlockFocus) {
+		EndPosition = CurrentBlockFocus->GetActorLocation();
+		//UE_LOG(LogTemp, Warning, TEXT("bAttack? %s"), CurrentBlockFocus->bAttack ? TEXT("true") : TEXT("false"))
+
 	}
+	else { EndPosition = SelectedItem->GetActorLocation() + SelectedItem->GetActorForwardVector() * 1500; }
+
+	//Attack range is the max range and each square is 60 units wide
+	//V=sqrt(displacement times acceleration divided by sin(2theta))
+	//gravity is -980
+	float MaxVelocity = sqrt(980.f*((SelectedItem->AttackRange)*60.f - 30.f));
+
+	float distance = sqrt((EndPosition.X - StartPosition.X)*(EndPosition.X - StartPosition.X) + (EndPosition.Y - StartPosition.Y)*(EndPosition.Y - StartPosition.Y));
+
+	float newDistance;
+	float pitchNew;
+	for (float i = 39.0f; i < 95.1f; i++) {
+		pitchNew = PI / 180.f* (i);
+		newDistance = MaxVelocity * FMath::Cos(pitchNew) *(MaxVelocity*FMath::Sin(pitchNew) + sqrt(MaxVelocity*MaxVelocity*FMath::Sin(pitchNew)*FMath::Sin(pitchNew) + 2 * 980.f * SelectedItem->GetActorLocation().Z)) / 980.f;
+		pitchNew = pitchNew * 180.f / PI;
+		if (FMath::IsWithin(newDistance, distance - 10, distance + 10)) { break; }
+		//UE_LOG(LogTemp, Warning, TEXT("End Pitch: %f, old distance %f, new distance %f"), alpha, distance, newDistance);
+	}
+
+	SelectedItem->SetActorRotation(FRotator(
+		pitchNew,
+		(EndPosition - StartPosition).Rotation().Yaw,
+		SelectedItem->GetActorRotation().Roll));
+
+
+	FPredictProjectilePathParams PredictParams;
+	PredictParams.StartLocation = FVector(SelectedItem->GetActorLocation() + SelectedItem->GetActorForwardVector() * 15);
+	//PredictParams.StartLocation.Z += 100;
+	PredictParams.LaunchVelocity = FVector(SelectedItem->GetActorForwardVector() * MaxVelocity);
+	PredictParams.bTraceWithChannel = true;
+	PredictParams.bTraceWithCollision = true;
+	PredictParams.ProjectileRadius = 5.1f;
+	PredictParams.TraceChannel = ECC_Visibility;
+	PredictParams.bTraceComplex = false;
+	PredictParams.ActorsToIgnore = IgnorList;
+	PredictParams.SimFrequency = 75.f;
+	PredictParams.MaxSimTime = 2.f;
+	//PredictParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	
+	
+	FPredictProjectilePathResult PredictResult;
+
+	if (CurrentBlockFocus) {
+		if (CurrentBlockFocus->bAttack) {
+			UGameplayStatics::PredictProjectilePath(GetWorld(), PredictParams, PredictResult);
+		}
+	}
+
+	FTransform InstTransfrom;
+	for (int i = 0; i < PredictResult.PathData.Num() - 2; i++) {
+		FVector Difference = PredictResult.PathData[i + 1].Location - PredictResult.PathData[i].Location;
+		FRotator Rotation = UKismetMathLibrary::MakeRotFromX(Difference);
+		Rotation.Pitch += 90;
+		InstTransfrom = FTransform(Rotation, PredictResult.PathData[i].Location, FVector(0.05f));
+		if (i + 1 < Ring->GetInstanceCount()) {
+			Ring->UpdateInstanceTransform(i, InstTransfrom, true, true, true);
+			UE_LOG(LogTemp, Warning, TEXT("Position %d -> Location: %s"), i, *PredictResult.PathData[i].Location.ToString());
+		}
+		else {
+
+			Ring->AddInstanceWorldSpace(InstTransfrom);
+			//ProjectilePathDisplay = GetWorld()->SpawnActor<UChildActorComponent>(SelectedItem->GetActorLocation(), Rotation);
+			//this->AddInstanceComponent(Ring);
+			//Ring->RegisterComponent();
+			UE_LOG(LogTemp, Warning, TEXT("Add instance")); 
+
+		}
+	}for (int i = PredictResult.PathData.Num() - 2; i < Ring->GetInstanceCount(); i++){ Ring->RemoveInstance(i); }
+	
+	//	UE_LOG(LogTemp, Warning, TEXT("Ring count %d"), Ring->GetInstanceCount());
+
+	//	Ring->GetInstanceTransform(Ring->GetInstanceCount() - 1, InstTransfrom, true);
+	//	Ring->UpdateInstanceTransform(Ring->GetInstanceCount() - 1, InstTransfrom, true, true, true);
+		//bCrossHair = false;
+	//}
+	//GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+	
+	//bCrossHair = false;
 
 }
 

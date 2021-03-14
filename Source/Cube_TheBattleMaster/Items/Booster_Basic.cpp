@@ -6,21 +6,7 @@
 
 ABooster_Basic::ABooster_Basic() {
 
-	struct FConstructorStatics
-	{
-		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
-		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
-		FConstructorStatics()
-			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
-			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
-		{
-		}
-	};
-	static FConstructorStatics ConstructorStatics;
 
-	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
-
-	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
 
 	WeaponName = "Booster";
 
