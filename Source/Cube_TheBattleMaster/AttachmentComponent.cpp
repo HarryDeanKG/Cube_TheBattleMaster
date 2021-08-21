@@ -39,49 +39,41 @@ UAttachmentComponent::UAttachmentComponent()
 	// ...
 }
 
-void UAttachmentComponent::Equip(AItemBase * Item, FName SocketName)
-{
-	SetEquipedWeapon(Item, SocketName);
-	UpdateInventoryStateUpdate.Broadcast();
-}
-
-void UAttachmentComponent::UnEquip(AItemBase * Item, FName SocketName)
-{
-	ClearEquipedWeapon(Item, SocketName);
-	UpdateInventoryStateUpdate.Broadcast();
-}
-
-void UAttachmentComponent::SetEquipedWeapon(AItemBase * Item, FName SocketName)
+void UAttachmentComponent::Equip(AItemBase* Item, FName SocketName)
 {
 	MarkSocketsUsed(UCustomFunctions::GetSocketPointByName(SocketName), Item);
-	RemoveFromInventory(Item);
+	
+	RemoveFromInventory(Item->GetClass());
 	Item->SetSlotName(SocketName);
-	Item->Equip();
+	Item->bEquip(true);
 	UpdateInventoryStateUpdate.Broadcast();
 }
 
-void UAttachmentComponent::ClearEquipedWeapon(AItemBase * Item, FName SocketName)
+void UAttachmentComponent::UnEquip(AItemBase* Item, FName SocketName)
 {
 	MarkSocketAvaliable(UCustomFunctions::GetSocketPointByName(SocketName));
-	AddToInventory(Item);
+	AddToInventory(Item->GetClass());
+	Item->bEquip(false);
 	UpdateInventoryStateUpdate.Broadcast();
-
+	
 }
 
-void UAttachmentComponent::AddToInventory(AItemBase* Item)
+
+void UAttachmentComponent::AddToInventory(TSubclassOf<AItemBase> Item)
 {
 	InventaryItems.Add(Item);
 	UpdateInventoryStateUpdate.Broadcast();
 }
 
-void UAttachmentComponent::RemoveFromInventory(AItemBase * Item)
+void UAttachmentComponent::RemoveFromInventory(TSubclassOf<AItemBase> Item)
 {
-	InventaryItems.Remove(Item);
+	//InventaryItems.Remove(Item);
+	InventaryItems.RemoveSingle(Item);
 	UpdateInventoryStateUpdate.Broadcast();
 
 }
 
-void UAttachmentComponent::MarkSocketsUsed(EAttachPoint Point, AItemBase * Item)
+void UAttachmentComponent::MarkSocketsUsed(EAttachPoint Point, AItemBase* Item)
 {
 	int32 LocalInt;
 	FAttachInfo_Struct LocalItem;

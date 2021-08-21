@@ -14,7 +14,7 @@ class CUBE_THEBATTLEMASTER_API ABooster_Basic : public AItemBase
 {
 	GENERATED_BODY()
 	
-
+	virtual void BeginPlay() override;
 public:
 
 	float AdditionalSpeed = 6;
@@ -30,10 +30,17 @@ public:
 
 	virtual void ResetAction() override;
 
-	UFUNCTION(BlueprintImplementableEvent)
+
+	UPROPERTY()
+	UParticleSystem* EmitterTemplate;
+
+	UPROPERTY()
+	UParticleSystemComponent* EmitterTemplateComponent;
+
+	UFUNCTION(NetMulticast, Reliable)
 	void BoostFireOn();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(NetMulticast, Reliable)
 	void BoostFireOff();
 
 	void HighlightBlocks(bool bHighlight);

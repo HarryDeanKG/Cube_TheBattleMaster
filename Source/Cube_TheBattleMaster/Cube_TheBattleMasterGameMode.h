@@ -44,6 +44,9 @@ public:
 	
 	//void BeginPlay() override;
 	
+
+	void InitiateGridBlocksEquality();
+
 	bool bDoActions;
 	bool bNextTurn;
 	int doAction = 0;

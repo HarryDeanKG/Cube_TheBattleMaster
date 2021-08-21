@@ -41,10 +41,7 @@ AShield_Basic::AShield_Basic() {
 }
 
 void AShield_Basic::DoAction(bool bMainPhase, FVector Direction) 
-{	
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-	APlayer_Cube* Cube = PlayerPawn->MyCube;
-
+{		
 	if (Cube->E_TurnStateEnum == ETurnState::TS_InitiateActions) {
 		if (ActionName == "Shield Off") { ShieldOff(); }
 		else if (ActionName == "Shield On") { ShieldOn(); }
@@ -62,7 +59,6 @@ void AShield_Basic::DoAction(bool bMainPhase, FVector Direction)
 		}
 	}
 
-
 	//if (bShield) {
 	//	T_ShieldSegments.Empty();
 	//}
@@ -71,6 +67,9 @@ void AShield_Basic::DoAction(bool bMainPhase, FVector Direction)
 
 
 void AShield_Basic::SetActionInMotion() {
+
+	if (!Cube){Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube;}
+
 	UE_LOG(LogTemp, Warning, TEXT("Set: %s"), *ActionName);
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
 	if (ActionName == "Shield Off")
@@ -116,9 +115,6 @@ void AShield_Basic::ShieldToggle_Implementation() {
 
 void AShield_Basic::ShieldOn()
 {
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-	APlayer_Cube* Cube = PlayerPawn->MyCube;
-
 	if (Cube->E_TurnStateEnum == ETurnState::TS_SelectActions) {
 		if (ActionName == "Shield On") { MakeShield(false); }
 		if (ActionName == "Shield Off") {
@@ -138,8 +134,6 @@ void AShield_Basic::ShieldOn()
 		if (GetLocalRole() < ROLE_Authority) { Server_ShieldOn(); }
 		else { MakeShield(true); }
 	}
-
-
 }
 
 void AShield_Basic::Server_ShieldOn_Implementation() { ShieldOn(); }
@@ -147,9 +141,6 @@ void AShield_Basic::Server_ShieldOn_Implementation() { ShieldOn(); }
 void AShield_Basic::MakeShield(bool bIsReplicating)
 {
 	bShield = true;
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-	APlayer_Cube* Cube = PlayerPawn->MyCube;
-
 	AShieldSegment* ShieldSegment;
 	
 	FRotator SpawnRotation = FRotator(-90.f, 0.f, 0.f);
@@ -179,10 +170,9 @@ void AShield_Basic::MakeShield(bool bIsReplicating)
 	//}
 
 	//ShieldSegment->AttachToComponent(PlayerPawn->MyCube->GetBlockMesh(), Trans, SlotName);
-	ShieldSegment->AttachToComponent(PlayerPawn->MyCube->GetBlockMesh(), Trans, GetAttachParentSocketName());
+	ShieldSegment->AttachToComponent(Cube->GetBlockMesh(), Trans, GetAttachParentSocketName());
 
 	//UE_LOG(LogTemp, Warning, TEXT("SlotName2: %s"), *ShieldSegment->GetAttachParentSocketName().ToString());
-	
 	
 	ShieldSegment->SetReplicates(bIsReplicating);
 	if (!bIsReplicating) { T_ShieldSegments.Add(ShieldSegment); }
@@ -192,8 +182,6 @@ void AShield_Basic::MakeShield(bool bIsReplicating)
 
 void AShield_Basic::ShieldOff()
 {
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-	APlayer_Cube* Cube = PlayerPawn->MyCube;
 	bShield = false;
 	if (Cube->E_TurnStateEnum == ETurnState::TS_SelectActions) {
 		if (ActionName == "Shield Off") {
@@ -242,8 +230,6 @@ void AShield_Basic::ShieldOff()
 void AShield_Basic::Server_ShieldOff_Implementation(){ ShieldOff(); }
 
 void AShield_Basic::ResetAction() {
-	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-
 	UE_LOG(LogTemp, Warning, TEXT("Reset Shield"));
 	if (T_ShieldSegments.Num() != 0)
 	{

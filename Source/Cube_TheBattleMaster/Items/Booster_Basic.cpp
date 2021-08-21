@@ -6,7 +6,13 @@
 
 ABooster_Basic::ABooster_Basic() {
 
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> PSClass(TEXT("/Game/AdvancedMagicFX12/particles/P_ky_shot_fire.P_ky_shot_fire"));
+	if (PSClass.Object != NULL) {
+		EmitterTemplate = PSClass.Object;
+	}
 
+	
+	GetBlockMesh();
 
 	WeaponName = "Booster";
 
@@ -19,18 +25,37 @@ ABooster_Basic::ABooster_Basic() {
 	bEndAction = true;
 }
 
+void ABooster_Basic::BeginPlay() {
+
+	Super::BeginPlay();
+
+	FTransform Transform;
+	Transform.SetLocation(OutwardLocation);
+	Transform.SetScale3D(FVector(0.1f));
+	//EmitterTemplateComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EmitterTemplate, Transform);
+
+	FAttachmentTransformRules Trans = FAttachmentTransformRules
+	(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		true
+	);
+	EmitterTemplateComponent = UGameplayStatics::SpawnEmitterAttached(EmitterTemplate, GetBlockMesh(), "S_Outward");
+}
 void ABooster_Basic::DoAction(bool bMainPhase, FVector Direction) {
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
-	APlayer_Cube* Cube = PlayerPawn->MyCube;
+	if (!Cube) { Cube = PlayerPawn->MyCube; }
 	
 	if (Cube->E_TurnStateEnum == ETurnState::TS_InitiateActions) { BoostFireOn(); }
 }
 
-void ABooster_Basic::EndAction()
-{
-	UE_LOG(LogTemp, Warning, TEXT("EndAction!!! Boost"));
-	BoostFireOff();
-}
+void ABooster_Basic::EndAction(){ BoostFireOff(); }
+//
+void ABooster_Basic::BoostFireOn_Implementation() { if (EmitterTemplateComponent) { EmitterTemplateComponent->SetRelativeScale3D(FVector(5.f)); } }
+//
+void ABooster_Basic::BoostFireOff_Implementation() { if (EmitterTemplateComponent) { EmitterTemplateComponent->SetRelativeScale3D(FVector(1.f)); } }
+
 
 void ABooster_Basic::SetActionInMotion() { HighlightBlocks(true); }
 
@@ -40,10 +65,11 @@ void ABooster_Basic::UnSetActionInMotion() { HighlightBlocks(false); }
 void ABooster_Basic::HighlightBlocks(bool bHighlight) {
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
 
-	float dummySpeed = PlayerPawn->MyCube->Replicated_Speed;
-	PlayerPawn->MyCube->Replicated_Speed += AdditionalSpeed;
-	PlayerPawn->HighlightMoveOptions(PlayerPawn->MyCube->BlockOwner, bHighlight);
+	int PreviousSpeed = PlayerPawn->MyCube->Replicated_Speed;
 	
+	PlayerPawn->MyCube->Replicated_Speed = AdditionalSpeed;
+	PlayerPawn->HighlightMoveOptions(PlayerPawn->MyCube->BlockOwner, bHighlight);
+	PlayerPawn->MyCube->Replicated_Speed = PreviousSpeed;
 }
 
 void ABooster_Basic::ResetAction() {

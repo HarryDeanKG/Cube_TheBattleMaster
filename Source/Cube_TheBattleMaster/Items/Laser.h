@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "Net/UnrealNetwork.h"
+
 #include "Weapon_Basic.h"
 #include "../Cube_TheBattleMasterPawn.h"
 
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
 
 #include "Laser.generated.h"
 
@@ -40,6 +43,12 @@ public:
 	float DistanceToLaserEnd;
 
 	virtual void DoAction(bool bMainPhase, FVector Direction) override;
+
+	void FireLaser(bool bMainPhase, FVector Direction);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_FireLaser(FVector FX_Location, FRotator FX_Rotation, float lengthOfLaser);
+
 
 	virtual void SetActionInMotion() override;
 	virtual void UnSetActionInMotion() override;

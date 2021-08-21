@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 //#include "GeometryCollection/GeometryCollectionObject.h"
 //#include "GeometryCollection/GeometryCollectionComponent.h"
@@ -67,11 +69,12 @@ public:
 
 	float DefaultDamage;
 
-
-	bool bTemporary;
+	UPROPERTY(Replicated)
+	bool bTemporary = false;
 
 	bool IsDestroyed;
 	/** Pointer to white material used on the focused block */
+
 
 	UFUNCTION()
 	void Trigger(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);

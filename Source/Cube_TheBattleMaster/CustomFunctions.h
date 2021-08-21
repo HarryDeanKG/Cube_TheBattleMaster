@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "EngineMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CustomFunctions.generated.h"
 
@@ -75,4 +75,9 @@ public:
 	//BlueprintNativeEvent
 	UFUNCTION(BlueprintCallable, BlueprintPure = true)
 	static EAttachPoint GetSocketPointByName(FName SocketName);
+
+	
+	/*UFUNCTION(BlueprintCallable)
+	UClass* FindClass(const FString& ClassName);*/
+
 };

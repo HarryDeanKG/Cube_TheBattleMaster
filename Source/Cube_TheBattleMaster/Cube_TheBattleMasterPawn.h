@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Player_Cube.h"
+#include "MySaveGame.h"
+#include "Cube_TheBattleMasterPlayerController.h"
 #include "Cube_TheBattleMasterBlock.h"
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPawn.generated.h"
@@ -36,7 +38,35 @@ struct FAction_Struct
 	UPROPERTY()
 	FVector SecondSelectedPosition = FVector(0.f);
 
+	UPROPERTY()
+	float Rotation = 0;
 
+
+};
+
+USTRUCT(BlueprintType)
+struct FMovement_Struct
+{
+	GENERATED_BODY()
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Movement_Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector MoveDirection = FVector(0.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bMoveOrRotate = false;
+
+	UPROPERTY()
+	AActor* SelectedActor = nullptr;
+
+	UPROPERTY()
+	float Rotation = 0;
+
+	UPROPERTY()
+	bool bIsRotationMovement = false;
 
 
 };
@@ -83,6 +113,9 @@ class ACube_TheBattleMasterPawn : public APawn
 	UPROPERTY(Transient, BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_MyCube)
 	class APlayer_Cube* CubeSelected;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
+	UMySaveGame* ImportedSavedDetails;
+
 
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Player Cube")
@@ -94,6 +127,8 @@ class ACube_TheBattleMasterPawn : public APawn
 	UFUNCTION(BlueprintImplementableEvent)
 	void CubeMaterialUpdate();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void RefreshEnergy();
 	
 	bool bDead = false;
 
@@ -106,7 +141,7 @@ class ACube_TheBattleMasterPawn : public APawn
 
 	FString WeaponName = "default";
 
-	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void RefreshMovement();
 
 	/*List of Actions to undertake*/
@@ -114,7 +149,8 @@ class ACube_TheBattleMasterPawn : public APawn
 	TMap<int32, FAction_Struct> M_ActionStructure;
 
 	UPROPERTY(BlueprintReadWrite)
-	TMap<int32, FVector> M_MovementList;
+	TMap<int32, FMovement_Struct> M_MovementList;
+
 
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FString, FString> M_PossibleActions;
@@ -123,24 +159,40 @@ class ACube_TheBattleMasterPawn : public APawn
 	TArray< ACube_TheBattleMasterBlock*> ToggleBackList;
 	TArray<ACube_TheBattleMasterBlock*> Path;
 
-	UPROPERTY(EditAnyWhere)
-	ACube_TheBattleMasterBlock* StartingBlock;
+	/*UPROPERTY(EditAnyWhere)
+	ACube_TheBattleMasterBlock* StartingBlock;*/
 
 	void SetAction(FString ActionName, FVector Direction);
+
+	void AddActionToList(FAction_Struct Action);
+
+	UFUNCTION(Reliable, Server)
+	void Server_AddActionToList(FAction_Struct Action);
+
+	void AddMovementToList(FMovement_Struct Movement);
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddMovementToList(FMovement_Struct Movement);
 
 	/*Called to initiate what action is to be done*/
 	void DoAction(int int_Action);
 
-	void AttackAction(ACube_TheBattleMasterPawn * Pawn, FString Name, ACube_TheBattleMasterBlock * Block, bool bAction);
+
+	UFUNCTION()
+	ACube_TheBattleMasterBlockGrid * GetServerGrid();
 
 	//void AttackAction(ACube_TheBattleMasterPawn* Pawn, FString Name, FVector AttackDirection, bool bAction);
 
+	UFUNCTION(BlueprintCallable)
 	void Test();
+
+	UFUNCTION(Server, Reliable)
+	void Server_Test();
 
 	UFUNCTION()
 	ACube_TheBattleMasterBlockGrid* GetGrid();
 
-	ACube_TheBattleMasterBlock * GetBlockFromPosition(FVector Direction);
+	ACube_TheBattleMasterBlock* GetBlockFromPosition(FVector Direction);
 
 	UPROPERTY(BlueprintReadWrite)
 	ACube_TheBattleMasterBlockGrid* MyGrid;
@@ -153,6 +205,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetInMotionSelectedAction(AItemBase * dummyItem);
+
+	UFUNCTION(BlueprintCallable)
+	void UnSetInMotionSelectedAction(AItemBase * dummyItem);
 
 
 	void ClearVars();
@@ -168,6 +223,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void Movement_Test(bool bToggle);
+
+	UFUNCTION(BlueprintCallable)
+	void RotationMovement_Test(bool bToggle, bool bFlip);
+
+	float GlobalFlip = 0;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void Reset_Buttons_test();
@@ -218,29 +278,39 @@ public:
 //	UFUNCTION(Server, Reliable, WithValidation)
 
 	UFUNCTION(Server, Reliable)
-	void Server_SetCube(ACube_TheBattleMasterPawn* Test, ACube_TheBattleMasterBlock * Block);
+	void Server_SetCube(ACube_TheBattleMasterPawn* Test, ACube_TheBattleMasterBlock * Block, FImportedCube_Struct SCube, const TArray<FName>& Keys, const TArray<TSubclassOf<AItemBase>>& ItemClasses);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetCube(ACube_TheBattleMasterPawn * Pawn, ACube_TheBattleMasterBlock * Block, FImportedCube_Struct SCube, TMap<FName, TSubclassOf<AItemBase>> AttachedItems);
 
 	UFUNCTION(BlueprintCallable)
-	void SetCube(ACube_TheBattleMasterPawn * Pawn, ACube_TheBattleMasterBlock * Block);
+	void SetCubeDetails(FImportedCube_Struct SCube, TMap<FName, TSubclassOf<AItemBase>> AttachedItems, APlayer_Cube * Cube);
+
 
 	void Movement(FVector dummyPosition);
 
+	void RotateCubeOld(ACube_TheBattleMasterBlock * Block, bool bAction);
+	void RotateCube(float RotationAngle, bool bAction);
 
+	float GlobalRoation = 0;
 
 	void ToggleOccupied(ACube_TheBattleMasterBlock* Block, bool Bon);
 
 	UFUNCTION(Reliable, Server)
 	void Server_ToggleOccupied(ACube_TheBattleMasterBlock * Block, bool Bon);
 
-	void HighlightMoveOptions(ACube_TheBattleMasterBlock* Block, bool Bmove);
-	
-	void HighlightAttackOptions(ACube_TheBattleMasterBlock* Block, bool bToggle, int minDistance, int maxDistance, bool bAttackImmutables);
+	void HighlightMoveOptions(ACube_TheBattleMasterBlock * CenterBlock, bool Bmove);
 
-	void Highlight_Block(int32 dummyX, int32 dummyY, bool bToggle, bool bAttackImmutables);
+	void HighlightRotationOptions(ACube_TheBattleMasterBlock * CenterBlock, bool Bmove);
+
+
+	float GetQuadrent(float YawActor, float PitchActor);
+	
+	void HighlightAttackOptions(ACube_TheBattleMasterBlock * Block, bool bToggle, int minDistance, int maxDistance, bool bAttackImmutables, bool bCross);
 
 	void Highlight_Path(ACube_TheBattleMasterBlock * Start, ACube_TheBattleMasterBlock * End);
 
-	void Highlight_PathBlock(int32 X, int32 Y);
+	void Highlight_PathBlock(int32 X, int32 Y, int32 Z);
 
 protected:
 
@@ -248,23 +318,17 @@ protected:
 
 	void MoveCube(ACube_TheBattleMasterBlock * Block, bool bAction);
 
-
-
-
 	UFUNCTION(BlueprintCallable)
 	void Turn();
-
-
 
 	UFUNCTION(Reliable, Server)
 	void Server_Turn();
 
-	/*UFUNCTION(Client, Reliable)
-	void Client_TriggerClick();*/
 public:
 	UPROPERTY(BlueprintReadWrite)
 	bool bCrossHair = false;
 	bool bArrow = false;
+	bool bRotation = false;
 
 	FVector ArrowEnd;
 	float rangeEnd = 0.f;
@@ -278,6 +342,8 @@ public:
 	FVector AttackDirection;
 	
 	void TraceForArrow(FVector Start, const FVector& End, bool bDrawDebugHelpers);
+
+	void TraceForRotationCircle(FVector Start, const FVector & Direction, bool bDrawDebugHelpers);
 
 	UPROPERTY(Category = Trace, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* ArrowMesh;
@@ -300,9 +366,13 @@ protected:
 	UPROPERTY()
 	class UMaterialInstanceDynamic* DynamicBaseMaterial;
 
+	UPROPERTY()
+	class UMaterialInstanceDynamic* VariedCubeMaterial;
+
 	void DoDamage(APlayer_Cube* OwnedCube, APlayer_Cube* ToDamageCube);
 
 	//bool IsInVacinity();
+
 
 	void CubeDestroy();
 
@@ -315,6 +385,9 @@ protected:
 	FORCEINLINE class UCameraComponent* GetCamera() const { return OurCamera; }
 
 public:
+
+	TArray<ADecalActor*> RemoveDecals;
+
 	/*Just a dummy functiont to reset the variables*/
 	
 	/*UFUNCTION(BlueprintImplementableEvent)

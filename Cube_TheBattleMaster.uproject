@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.26Chaos",
+	"EngineAssociation": "4.26",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -24,6 +24,10 @@
 		},
 		{
 			"Name": "FieldSystemPlugin",
+			"Enabled": true
+		},
+		{
+			"Name": "Landmass",
 			"Enabled": true
 		}
 	]

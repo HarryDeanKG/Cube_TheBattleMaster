@@ -6,8 +6,8 @@
 #include "Cube_TheBattleMasterPawn.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraFunctionLibrary.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraFunctionLibrary.h"
 
 //#include "../../Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
 #include "Engine.h"
@@ -104,19 +104,22 @@ AShieldSegment::AShieldSegment()
 
 }
 
-void AShieldSegment::TimelineProgress(float Value)
+void AShieldSegment::TimelineProgress_Implementation(float Value)
 {
 	DynamicBaseMaterial->SetScalarParameterValue("Amount", Value);
+	DynamicBaseMaterial->SetScalarParameterValue("Opacity2", 1-Value);
 	CapsuleComponent->SetRelativeScale3D(FVector( Value/0.85  * 10, Value/0.85  * 10, 2.5f));
+	UE_LOG(LogTemp, Warning, TEXT("Value is %f"), Value);
+
 }
 
-void AShieldSegment::TimelineProgress_Hit(float Value)
+void AShieldSegment::TimelineProgress_Hit_Implementation(float Value)
 {
 	DynamicBaseMaterial->SetScalarParameterValue("Radius", Value*10);
 	DynamicBaseMaterial->SetScalarParameterValue("Hardness", Value*0.75);
 }
 
-void AShieldSegment::TimelineProgress_Laser(float Value)
+void AShieldSegment::TimelineProgress_Laser_Implementation(float Value)
 {
 	DynamicBaseMaterial->SetScalarParameterValue("Main_Emissivity", Value * 10000);
 	BlockMesh->SetRelativeScale3D(FVector(1-Value));
@@ -150,6 +153,7 @@ void AShieldSegment::BeginPlay()
 		FOnTimelineFloat TimelineProgress;
 		TimelineProgress.BindUFunction(this, FName("TimelineProgress"));
 		CurveTimeline.AddInterpFloat(Curve_Amount, TimelineProgress);
+		
 	}
 	if (Curve_Hit) {
 		FOnTimelineFloat TimelineProgress_Hit;
@@ -261,7 +265,7 @@ void AShieldSegment::Trigger(UPrimitiveComponent* HitComponent, AActor* OtherAct
 void AShieldSegment::Overlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
 	if (OtherActor != this) {
-		UE_LOG(LogTemp, Warning, TEXT("Overlap!!!!!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Overlap!!!!!"));
 		OtherComp->SetCollisionProfileName("OverlapAll");
 		//OtherComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 
@@ -270,7 +274,7 @@ void AShieldSegment::Overlap(UPrimitiveComponent * OverlappedComponent, AActor *
 
 void AShieldSegment::OverlapOver(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlap Over"));
+	//UE_LOG(LogTemp, Warning, TEXT("Overlap Over"));
 	if (OtherActor != this) {
 		OtherComp->SetCollisionProfileName("PhysicsActor");
 	}
@@ -283,12 +287,19 @@ void AShieldSegment::LaserHit_Implementation(FVector ImpactPoint)
 
 
 	UNiagaraComponent* FX_ExlosionComponenet = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), NiagaraLaserHitExplosion, BlockMesh->GetComponentLocation(), BlockMesh->GetComponentRotation());
-	FX_ExlosionComponenet->SetNiagaraVariableVec3("Origin Offset", BlockMesh->GetComponentLocation() - ImpactPoint + FVector(0.f, 0.f, 500.f));
+	if (FX_ExlosionComponenet) {
+		FX_ExlosionComponenet->SetNiagaraVariableVec3("Origin Offset", BlockMesh->GetComponentLocation() - ImpactPoint + FVector(0.f, 0.f, 500.f));
+	}
 	DynamicBaseMaterial->SetVectorParameterValue("Location", ImpactPoint);
 
-	if (Curve_Laser) { CurveTimeline_Laser.PlayFromStart();	}
+	if (Curve_Laser) { CurveTimeline_Laser.PlayFromStart(); }
 
 	IsDestroyed = true;
+	
+	if (ItemOwner) { ItemOwner->Destroy(); }
+
+
+
 	//Destroy();
 }
 

@@ -8,7 +8,7 @@ public class Cube_TheBattleMaster : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "Niagara", "Json" , "GameplayTasks" });
 
         //PublicIncludePaths.AddRange(new string[] {
         //    Path.Combine(ModuleDirectory, "../../Engine/Plugins/FX/Niagara/Source/Niagara"),

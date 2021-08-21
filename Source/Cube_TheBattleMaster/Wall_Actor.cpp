@@ -8,8 +8,8 @@
 #include "Engine/DecalActor.h"
 #include "Components/DecalComponent.h"
 
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraFunctionLibrary.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraFunctionLibrary.h"
 
 #include "Kismet/KismetMathLibrary.h"
 //#include "Chaos/Core.h"
@@ -201,8 +201,13 @@ void AWall_Actor::Trigger(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 }
 
+
+
 void AWall_Actor::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWall_Actor, Replicated_Health);
+
+	DOREPLIFETIME(AWall_Actor, bTemporary);
+
 }

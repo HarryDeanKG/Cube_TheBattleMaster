@@ -2,9 +2,12 @@
 
 #include "Cube_TheBattleMasterGameMode.h"
 #include "Cube_TheBattleMasterPlayerController.h"
+#include "Cube_TheBattleMasterBlockGrid.h"
 #include "UObject/UObjectIterator.h"
 #include "Player_Cube.h"
 #include "Cube_TheBattleMasterPawn.h"
+
+
 #include "UObject/ConstructorHelpers.h"
 #include "TimerManager.h"
 
@@ -34,15 +37,72 @@ ACube_TheBattleMasterGameMode::ACube_TheBattleMasterGameMode()
 }
 
 //void ACube_TheBattleMasterGameMode::BeginPlay() {
-//	
-//	//for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
-//	//	Pawn->SetCube(*Pawn);
-//	//}
+////	
+////	//for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
+////	//	Pawn->SetCube(*Pawn);
+////	//}
+//
+//
+//
+//
+//
 //}
+
+void ACube_TheBattleMasterGameMode::InitiateGridBlocksEquality() {
+	bool bFlag = false;
+
+	int i = 0;
+	for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid2; Grid2; ++Grid2) {
+		for (auto Elems : Grid2->Grid) {
+			i++;
+			if (Elems.Value->BasicEnergy == 0) {
+				bFlag = true;
+			}
+			break;
+		}
+	}
+	if (i != GetNumPlayers() + 1) { bFlag = false; }
+
+	if (bFlag) {
+		TMap<int, float> testerMap;
+		for (TObjectIterator<ACube_TheBattleMasterBlockGrid> Grid2; Grid2; ++Grid2) {
+			i = 0;
+			for (auto Elems : Grid2->Grid)
+			{
+				if (Elems.Value->BasicEnergy != 0) {
+					testerMap.Add(i, Elems.Value->BasicEnergy);
+				}
+				else {
+					Elems.Value->SetEnergyVariables(testerMap[i]);
+				}
+				i++;
+			}
+		}
+	}
+}
 
 void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 	
+	//Initalize the GRIDS
+	InitiateGridBlocksEquality();
+	
+
+	////////
+
+	//int32 i = 0;
+	//for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
+	//	if (PlayerPawn->CubeSelected) {
+	//		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *PlayerPawn->GetName(), PlayerPawn->CubeSelected->bReady ? TEXT("True") : TEXT("False"));
+	//		if (PlayerPawn->CubeSelected->bReady) {
+	//			i++;
+	//		}
+	//	}
+	//}
+	//if (GetNumPlayers() <= i) { BeginTheGame(); 			UE_LOG(LogTemp, Warning, TEXT("GAMESTART"));
+	//}
+
+
 	//if (ROLE_Authority == GetLocalRole()) {
 	//	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
 	//		if (PlayerPawn->MyCube) {					
@@ -66,13 +126,19 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 			for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn){
 				
 				if (PlayerPawn->MyCube) {
-					UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+					//UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+
+					//PlayerPawn->MyCube->bReady = false;
+					//PlayerPawn->MyCube->time = 0.f;
+
+					
+
 					if (PlayerPawn->M_ActionStructure.Contains(doAction)) {
 						
 						//PlayerPawn->MyCube->InitiateMovementAndAction();
-						PlayerPawn->DoAction(doAction);
+						//PlayerPawn->DoAction(doAction);
 					}
-					UE_LOG(LogTemp, Warning, TEXT("doAction %d"), doAction);
+					//UE_LOG(LogTemp, Warning, TEXT("doAction %d"), doAction);
 					if (doAction > 3) {
 						//UE_LOG(LogTemp, Warning, TEXT("test"));
 						//PlayerPawn->ResetEverything(false);
@@ -81,6 +147,8 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 						PlayerPawn->MyCube->SetReplicatingMovement(false);
 						PlayerPawn->bReady = false;
 
+						//PlayerPawn->MyCube->BlockOwner = PlayerPawn->GetBlockFromPosition(PlayerPawn->MyCube->GetActorLocation());
+
 						PlayerPawn->ClearVars();
 						PlayerPawn->Reset_Buttons_test();
 						PlayerPawn->UpdateActions();
@@ -88,6 +156,8 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 					else {
 						//UE_LOG(LogTemp, Warning, TEXT("DoAction: %d - %s"), doAction, PlayerPawn->M_ActionStructure.Contains(doAction) ? TEXT("True") : TEXT("False")); 
 						if (PlayerPawn->M_ActionStructure.Contains(doAction)) {
+							//PlayerPawn->MyCube->bReady = false;
+							//PlayerPawn->MyCube->time = 0.f;
 							PlayerPawn->DoAction(doAction);
 						}
 					}
@@ -107,6 +177,11 @@ void ACube_TheBattleMasterGameMode::Tick(float DeltaSeconds) {
 				//UE_LOG(LogTemp, Warning, TEXT("Player %s is ready: %s"), *PlayerPawn->GetName(), PlayerPawn->MyCube->bReady ? TEXT("True") : TEXT("False"));
 			}
 		}
+		//for (TObjectIterator<APlayer_Cube> Cube; Cube; ++Cube) {
+		//		if (Cube->bReady) { bNextTurn = false; }
+		//		UE_LOG(LogTemp, Warning, TEXT("Cube %s is ready: %s"), *Cube->GetName(), Cube->bReady ? TEXT("True") : TEXT("False"));
+		//}
+
 	}
 }
 
@@ -123,9 +198,9 @@ void ACube_TheBattleMasterGameMode::TakeTurn()
 			if (PlayerPawn->MyCube) {
 				PlayerPawn->MyCube->E_TurnStateEnum = ETurnState::TS_InitiateActions;
 				PlayerPawn->MyCube->SetReplicatingMovement(true);
-				UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->GetName());
 
-				UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->MyCube->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("Player name: %s"), *PlayerPawn->MyCube->GetName());
 
 			}
 		}
@@ -161,14 +236,14 @@ void ACube_TheBattleMasterGameMode::EndGameCondition()
 bool ACube_TheBattleMasterGameMode::BeginTheGame_Implementation()
 {
 	//This is to circumvent the StartSection
-	E_GameSectionEnum = EGameSection::GS_MidSection;
-	return true;
+	/*E_GameSectionEnum = EGameSection::GS_MidSection;
+	return true;*/
 
 	int32 i = 0;
 	for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
 		if (PlayerPawn->CubeSelected) {
-			//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *PlayerPawn->GetName(), PlayerPawn->CubeSelected->bReady ? TEXT("True") : TEXT("False"));
-			if (PlayerPawn->CubeSelected->bReady) {
+			//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *PlayerPawn->GetName(), PlayerPawn->bReady ? TEXT("True") : TEXT("False"));
+			if (PlayerPawn->bReady) {
 				i++;
 			}
 		}
@@ -178,16 +253,22 @@ bool ACube_TheBattleMasterGameMode::BeginTheGame_Implementation()
 		E_GameSectionEnum = EGameSection::GS_MidSection;
 		for (TObjectIterator<ACube_TheBattleMasterPawn> PlayerPawn; PlayerPawn; ++PlayerPawn) {
 			if (PlayerPawn->CubeSelected) {
-				PlayerPawn->Waiting();
-				PlayerPawn->bReady = false;
-				PlayerPawn->CubeSelected->bReady = false;
-				PlayerPawn->CubeSelected->SetActorLocation(FVector(0.f));
-				PlayerPawn->CubeSelected->Destroy();
+				//PlayerPawn->Waiting();
+				//PlayerPawn->bReady = false;
+				
+				Cast<ACube_TheBattleMasterPlayerController>(PlayerPawn->GetOwner())->SetReadyToPlay();
+				//Cast<ACube_TheBattleMasterPlayerController>(PlayerPawn->GetOwner());
+
+
+				//PlayerPawn->CubeSelected->bReady = false;
+				//PlayerPawn->CubeSelected->SetActorLocation(FVector(0.f));
+				//PlayerPawn->CubeSelected->Destroy();
+				//PlayerPawn->SpawnMap();
 			}
 		}
 		return true;
-	}
-	else { return false; }
-	
+	}		
+	//else {  }
+	return false;
 }
 

@@ -35,5 +35,5 @@ void AWeapon_Basic::UnSetActionInMotion() {
 void AWeapon_Basic::HighlightBlocks(bool bHighlight) {
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
 
-	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, AttackRangeMin, AttackRange, false);
+	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, AttackRangeMin, AttackRange, false, true);
 }

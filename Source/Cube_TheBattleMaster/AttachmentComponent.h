@@ -25,8 +25,6 @@ public:
 	UAttachmentComponent();
 
 public:
-	UFUNCTION(BlueprintImplementableEvent)
-	void test();
 
 	UFUNCTION(BlueprintCallable)
 	void Equip(AItemBase* Item, FName SocketName);
@@ -38,7 +36,7 @@ public:
 	TArray<FAttachInfo_Struct> SocketStates;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
-	TArray<AItemBase*> InventaryItems;
+	TArray<TSubclassOf<AItemBase>> InventaryItems;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ammo")
 	TArray<FAmmoInfo_Struct> Ammo;
@@ -54,14 +52,12 @@ public:
 	void GetCurrentAmmo(EAmmunitionType Type, int32& int_Ammo);
 
 	
-	void SetEquipedWeapon(AItemBase*  Item, FName SocketName);
-
-	void ClearEquipedWeapon(AItemBase* Item, FName SocketName);
 
 	UFUNCTION(BlueprintCallable)
-	void AddToInventory(AItemBase* Item);
+	void AddToInventory(TSubclassOf<AItemBase> Item);
 
-	void RemoveFromInventory(AItemBase* Item);
+	UFUNCTION(BlueprintCallable)
+	void RemoveFromInventory(TSubclassOf<AItemBase> Item);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FUpdateInventoryStateUpdate);
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")

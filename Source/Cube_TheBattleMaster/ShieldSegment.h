@@ -9,7 +9,7 @@
 #include "Components/CapsuleComponent.h"
 
 
-#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
+//#include "D:/Unreal/UE_4.26Chaos/Engine/Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
 
 
 #include "ShieldSegment.generated.h"
@@ -54,13 +54,13 @@ public:
 	void DoTheCurve();
 
 
-	UFUNCTION()
+	UFUNCTION(NetMulticast, Reliable)
 	void TimelineProgress(float Value);
 
-	UFUNCTION()
+	UFUNCTION(NetMulticast, Reliable)
 	void TimelineProgress_Hit(float Value);
 
-	UFUNCTION()
+	UFUNCTION(NetMulticast, Reliable)
 	void TimelineProgress_Laser(float Value);
 
 protected:
@@ -126,7 +126,7 @@ public:
 	UPROPERTY()
 	class UMaterial* BaseMaterial;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 	void LaserHit(FVector ImpactPoint);
 
 	//Niagara components

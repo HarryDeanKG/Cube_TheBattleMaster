@@ -45,6 +45,8 @@ ABuildObject_Basic::ABuildObject_Basic() {
 	bCanBeUsedWithMovement = false;
 
 	AttackRange = 1;
+
+	//ActionItteration = 0;
 }
 
 void ABuildObject_Basic::MakeTheWall(FVector Direction, bool bMainPhase) {
@@ -75,39 +77,36 @@ void ABuildObject_Basic::MakeTheWall(FVector Direction, bool bMainPhase) {
 		EAttachmentRule::KeepRelative,
 		true
 	);
-
+	
 	//FAttachmentTransformRules::SnapToTargetIncludingScale
 	FVector Dir =  Direction - PlayerPawn->MyCube->GetActorLocation();
 	Wall->AttachToSelect(Block->GetBlockMesh(), Trans, FindCorrectSlot(Dir));
-	
+
 	if (!bMainPhase) {
 		Wall->bTemporary = true;
-		PlayerPawn->FlagedForDeleation.Add(Wall);		
+
 		PlayerPawn->ToggleBackList.Add(Block);
-		Block->ToggleOccupied(true);
-	} else{ 
-		Wall->bTemporary = false; 
-		Wall->SetReplicates(true);
+		PlayerPawn->FlagedForDeleation.Add(this);
+	}  
+	else{ 
+		Wall->SetReplicates(true);/*
 		//All blocks need to be toggled here
 		for (TObjectIterator<ACube_TheBattleMasterPawn> Pawn; Pawn; ++Pawn) {
 			Pawn->GetBlockFromPosition(Block->GetActorLocation())->ToggleOccupied(true);
 		}
-			
-		//Block->ToggleOccupied(true);
+			*/
 	}
+	Block->ToggleOccupied(true);
 }
 
 void ABuildObject_Basic::DoAction(bool bMainPhase, FVector Direction) {
-	
 	MakeTheWall(Direction, bMainPhase);
-	HighlightBlocks(false);
+	//HighlightBlocks(false);
 }
 
 void ABuildObject_Basic::ResetAction() {
-	UE_LOG(LogTemp, Warning, TEXT("Reset wall"));
-	
 	for (TObjectIterator<AWall_Actor> Elems; Elems; ++Elems) {
-		if (Elems->bTemporary) {
+		if (Elems -> bTemporary && Elems->GetOwner() == GetOwner()) {
 			Elems->Destroy();
 		}
 	}
@@ -118,21 +117,38 @@ void ABuildObject_Basic::SetActionInMotion() { HighlightBlocks(true); }
 void ABuildObject_Basic::UnSetActionInMotion() { HighlightBlocks(false); }
 
 
+
 void ABuildObject_Basic::HighlightBlocks(bool bHighlight) {
 	ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
 	
-	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, AttackRange, AttackRange, false);
+	PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, bHighlight, AttackRange, AttackRange, false, false);
 }
 
 FName ABuildObject_Basic::FindCorrectSlot(FVector Direction) {
 
-	if (Direction.X > 0 && Direction.Y == 0) { return FName("North"); }
-	else if (Direction.X == 0 && Direction.Y > 0) { return FName("East"); }
-	else if (Direction.X < 0 && Direction.Y == 0) { return FName("South"); }
-	else if (Direction.X == 0 && Direction.Y < 0) { return FName("West"); }
-	else if (Direction.X > 0 && Direction.Y > 0) { return FName("NE"); }
-	else if (Direction.X > 0 && Direction.Y < 0) { return FName("NW"); }
-	else if (Direction.X < 0 && Direction.Y > 0) { return FName("SE"); }
-	else if (Direction.X < 0 && Direction.Y < 0) { return FName("SW"); }
-	else { return FName("North"); }
+	//if (Direction.X > 0 && Direction.Y == 0) { return FName("North"); }
+	//else if (Direction.X == 0 && Direction.Y > 0) { return FName("East"); }
+	//else if (Direction.X < 0 && Direction.Y == 0) { return FName("South"); }
+	//else if (Direction.X == 0 && Direction.Y < 0) { return FName("West"); }
+	//else if (Direction.X > 0 && Direction.Y > 0) { return FName("NE"); }
+	//else if (Direction.X > 0 && Direction.Y < 0) { return FName("NW"); }
+	//else if (Direction.X < 0 && Direction.Y > 0) { return FName("SE"); }
+	//else if (Direction.X < 0 && Direction.Y < 0) { return FName("SW"); }
+	//else { return FName("North"); }
+
+	float Rot = Direction.Rotation().Yaw;
+	Rot += 180.f;
+	UE_LOG(LogTemp, Warning, TEXT("Direction %s, rotation %f"), *Direction.ToString(), Rot)
+	Rot = FMath::RoundToFloat(Rot / 30) * 30;
+	UE_LOG(LogTemp, Warning, TEXT("Direction %s, rotation %f"), *Direction.ToString(), Rot)
+	
+	
+
+	if (Rot == 30) { return FName("30"); }
+	else if (Rot == 90) { return FName("90"); }
+	else if (Rot == 150) { return FName("150"); }
+	else if (Rot == 210) { return FName("210"); }
+	else if (Rot == 270) { return FName("270"); }
+	else if (Rot == 330) { return FName("330"); }
+	else { return FName("30"); }
 }

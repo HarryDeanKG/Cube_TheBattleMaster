@@ -2,8 +2,10 @@
 
 #include "ItemBase.h"
 #include "Cube_TheBattleMasterPawn.h"
-#include "Player_Cube.h"
-#include "AttachmentComponent.h"
+//#include "Player_Cube.h"
+//#include "AttachmentComponent.h"
+#include "Net/UnrealNetwork.h"
+
 #include "Components/StaticMeshComponent.h"
 
 // Sets default values
@@ -11,6 +13,9 @@ AItemBase::AItemBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
+	PrimaryActorTick.bAllowTickOnDedicatedServer = true;
+
 
 	bReplicates = true;
 
@@ -45,6 +50,29 @@ AItemBase::AItemBase()
 
 	OutwardLocation = BlockMesh->GetSocketLocation("S_Outward") * 0.25;
 
+	OnTakeAnyDamage.AddDynamic(this, &AItemBase::ApplyDamage);
+	OnTakeRadialDamage.AddDynamic(this, &AItemBase::ApplyRadialEffects);
+
+
+	//Trace options are considered here
+
+	//Trace arrow is for lasers and straight attacks, should be fine for low projectile motion too
+		/*ACube_TheBattleMasterPawn* PlayerPawn = Cast<ACube_TheBattleMasterPawn>(GetOwner());
+		PlayerPawn->bArrow = true;
+
+		PlayerPawn->ArrowEnd = GetActorLocation();
+		PlayerPawn->rangeEnd = AttackRange;*/
+
+	//Trace cross hair is for projectile motion, taking the upper arc by defualt
+	//Uses attack squares from HighlightAttackOptions(true)
+		/*
+		PlayerPawn->HighlightAttackOptions(PlayerPawn->MyCube->BlockOwner, true, AttackRangeMin, AttackRange, false);
+		Cast<ACube_TheBattleMasterPawn>(GetOwner())->bCrossHair = true;
+		*/
+
+	//Also consider the trace block and trace actor will provide blocks and actors for trace arrow and trace cross hari
+	//The blocks are looked for by default but the actor is called in arrow (if in range etc...)
+
 	AttackRange = 7.f;
 	AttackRangeMin = 7.f;
 	ActionItteration = 1;
@@ -58,13 +86,20 @@ void AItemBase::BeginPlay()
 	//Required for character creation
 
 
-	UE_LOG(LogTemp, Warning, TEXT("Owner Is %s"), *GetOwner()->GetName());
-	if (Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube) {
-		APlayer_Cube* Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube;
+	/* Looks like we can't define owner and cube before this is triggered, make sure this is always defined on constructor*/
 
-		Cube->GetAttachComponent()->AddToInventory(this);
-	}
+	//UE_LOG(LogTemp, Warning, TEXT("Owner Is %s"), *GetOwner()->GetName());
+	//if (Cube) {
+		//Cube->GetAttachComponent()->AddToInventory(GetClass());
+	//}
+	//else { Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube; }
 }
+
+void AItemBase::Tick(float DeltaTime){ 
+	Super::Tick(DeltaTime); 
+	//UE_LOG(LogTemp, Warning, TEXT("Time step %f and name %s"), DeltaTime, *GetName());
+}
+
 
 void AItemBase::SetSlotName(FName SlotName)
 {
@@ -73,7 +108,7 @@ void AItemBase::SetSlotName(FName SlotName)
 
 void AItemBase::bEquip(bool bEquip)
 {
-	APlayer_Cube* Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube;
+	if (!Cube) { Cube = Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube; }
 
 	if (bEquip) {
 		FAttachmentTransformRules Trans = FAttachmentTransformRules
@@ -86,6 +121,7 @@ void AItemBase::bEquip(bool bEquip)
 		AttachToComponent(Cube->GetBlockMesh(), Trans , EquipSocketName);
 		//Cube->M_SlotsRefference.Add(this->GetName(), this);
 		Cube->M_SlotsRefference.Add(this->WeaponName, this); 
+		DefaultRotation = GetActorRotation();
 	}
 	else {
 		FDetachmentTransformRules Trans = FDetachmentTransformRules
@@ -98,7 +134,7 @@ void AItemBase::bEquip(bool bEquip)
 		DetachFromActor(Trans);
 		//Cube->M_SlotsRefference.Remove(this->GetName());
 		Cube->M_SlotsRefference.Add(this->WeaponName, this);
-		
+		DefaultRotation = FRotator(0.f);
 	}//UE_LOG(LogTemp, Warning, TEXT("%s"), *this->WeaponName); UE_LOG(LogTemp, Warning, TEXT("%s"), *this->GetName());
 }
 
@@ -122,6 +158,8 @@ void AItemBase::DoAction(bool bMainPhase, FVector Direction){
 	UE_LOG(LogTemp, Warning, TEXT("Default Action for %s"), *GetName());
 	UE_LOG(LogTemp, Warning, TEXT("Number!!!: %d"), GetLocalRole());
 
+
+
 	/*const FRotator SpawnRotation = GetActorRotation();
 
 	const FVector SpawnLocation = GetActorLocation();
@@ -141,10 +179,16 @@ void AItemBase::EndAction()
 	UE_LOG(LogTemp, Warning, TEXT("Action has ended!"));
 }
 
+void AItemBase::StartAction(FToDo_Struct Action)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Action has started!"));
+}
+
 void AItemBase::SetActionInMotion()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Default SetAction"));
 	
+	DoAction(true, Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube->GetActorLocation());
 }
 
 void AItemBase::UnSetActionInMotion()
@@ -154,4 +198,33 @@ void AItemBase::UnSetActionInMotion()
 
 void AItemBase::ResetAction()
 {
+}
+
+
+void AItemBase::ApplyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (Damage > 0 && GetLocalRole() == ROLE_Authority)
+	{
+		Replicated_Health = FMath::Clamp(Replicated_Health - Damage, 0.0f, Replicated_Health);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s has %f health"), *GetName(), Replicated_Health);
+}
+
+void AItemBase::ApplyRadialEffects(AActor* DamagedActor, float DamageReceived, const class UDamageType* DamageType, FVector Origin, FHitResult HitInfo, class AController* InstigatedBy, AActor* DamageCauser)
+{
+	Cast<ACube_TheBattleMasterPawn>(GetOwner())->MyCube->bNeedsDamage=true;
+	//UE_LOG(LogTemp, Warning, TEXT("Radial effects"));
+
+	//ApplyDamage(DamagedActor, DamageReceived, DamageType, InstigatedBy, DamageCauser);
+
+}
+
+void AItemBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AItemBase, DefaultRotation);
+
+	DOREPLIFETIME(AItemBase, Replicated_Health);
+
+
 }

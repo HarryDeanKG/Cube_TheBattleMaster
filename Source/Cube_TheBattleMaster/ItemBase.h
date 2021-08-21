@@ -4,10 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "AttackComponent.h"
-#include "SmallMunition.h"
 #include "CustomFunctions.h"
+#include "Engine/DecalActor.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+
+//#include "AttackComponent.h"
+#include "SmallMunition.h"
+#include "Player_Cube.h"
 #include "ItemBase.generated.h"
 
 
@@ -15,17 +20,18 @@ UCLASS()
 class CUBE_THEBATTLEMASTER_API AItemBase : public AActor
 {
 	GENERATED_BODY()
-
+private:
 	/** Dummy root component */
 	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* DummyRoot;
-public:
+
 	/** StaticMesh component for the clickable block */
 	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* BlockMesh;
 
 	//UPROPERTY(Category = "Attack", BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	//class UAttackComponent* AttackComponent;
+
 
 
 public:
@@ -43,6 +49,16 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+
+	virtual void Tick(float DeltaTime) override;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class APlayer_Cube* Cube;
+
+	UPROPERTY(BlueprintReadWrite)
+	class ACube_TheBattleMasterPawn* MyOwner;
+
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;
 
@@ -61,8 +77,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void ResetAction();
 
+	UFUNCTION()
+	void ApplyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
+	UFUNCTION()
+	void ApplyRadialEffects(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, FVector Origin, FHitResult HitInfo, class AController* InstigatedBy, AActor* DamageCauser);
+
+
+	UPROPERTY(Replicated)
+	float Replicated_Health = 100.f;
+
+
 	UFUNCTION(BlueprintCallable)
 	virtual void EndAction();
+
+	UFUNCTION()
+	virtual void StartAction(FToDo_Struct Action);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	FString WeaponName = "Weapon Default";
@@ -83,6 +113,10 @@ public:
 	int AmmoCurrent;
 	//Decide whether the item has something at the end (Currently only works for 0 itteration items).
 	bool bEndAction;
+	bool bStartAction;
+
+	UPROPERTY(Replicated)
+	FRotator DefaultRotation;
 
 	EAmmunitionType AmmoType;
 

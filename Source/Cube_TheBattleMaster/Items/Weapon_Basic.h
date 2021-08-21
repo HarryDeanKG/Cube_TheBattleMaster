@@ -18,10 +18,14 @@ public:
 
 	AWeapon_Basic();
 
+	//UFUNCTION(BlueprintCallable)
 	virtual void SetActionInMotion() override;
 
+	//UFUNCTION(BlueprintCallable)
 	virtual void UnSetActionInMotion() override;
 
-
+	//UFUNCTION()
 	void HighlightBlocks(bool bHighlight);
+
+	bool bRotateForHit;
 };

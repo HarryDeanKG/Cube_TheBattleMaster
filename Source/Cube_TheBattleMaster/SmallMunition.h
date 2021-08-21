@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
+#include "Particles/ParticleSystem.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 #include "SmallMunition.generated.h"
 
@@ -20,6 +23,12 @@ class CUBE_THEBATTLEMASTER_API ASmallMunition : public AActor
 	/** StaticMesh component for the clickable block */
 	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* BlockMesh;
+
+	UPROPERTY(Category = Movement, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY(Category = Decal, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UMaterialInterface* RedCircleDecal;
 
 public:	
 	// Sets default values for this actor's properties
@@ -37,10 +46,16 @@ protected:
 
 	UFUNCTION()
 	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCExplosion(FVector Location);
 
 	// create trigger capsule
 	UPROPERTY(VisibleAnywhere, Category = "Trigger Capsule")
 	class UCapsuleComponent* TriggerCapsule;
+
+	// Sphere collision component.
+	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
+	USphereComponent* CollisionComponent;
 
 	//UFUNCTION()
 	//void BeginOverlap( AActor* OverlappedActor, AActor* OtherActor );
@@ -49,6 +64,9 @@ protected:
 	//void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:	
+
+	// Function that initializes the projectile's velocity in the shoot direction.
+	void FireInDirection(const FVector& ShootDirection);
 
 	//Set the variables used in calculations
 	/*UPROPERTY(EditAnywhere)
@@ -60,8 +78,16 @@ public:
 	//Properties of the projectile
 	float Speed;
 
+	FVector StartVelocity;
+
 	UPROPERTY(BlueprintReadWrite)
 	FVector Direction= FVector(0.f);
+
+	UPROPERTY()
+	UParticleSystem* EmitterTemplate;
+
+	
+		
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }

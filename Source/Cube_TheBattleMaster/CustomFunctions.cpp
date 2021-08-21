@@ -2,7 +2,7 @@
 
 
 #include "CustomFunctions.h"
-
+#include "Player_Cube.h"
 
 TArray<UClass*> UCustomFunctions::GetClasses(UClass* ParentClass)
 {
@@ -10,9 +10,14 @@ TArray<UClass*> UCustomFunctions::GetClasses(UClass* ParentClass)
 
 	// get our parent blueprint class
 	const FString ParentClassName = ParentClass->GetName();
-	UObject* ClassPackage = ANY_PACKAGE;
-	UClass* ParentBPClass = FindObject<UClass>(ClassPackage, *ParentClassName);
 
+	UObject* ClassPackage = ANY_PACKAGE;
+	//UClass* ParentBPClass = FindObject<UClass>(ClassPackage, *ParentClassName);
+	//UClass* ParentBPClass = StaticLoadClass(UClass::StaticClass(), nullptr, *ParentClassName, nullptr, LOAD_None, nullptr);
+
+	FString ClassName = FStringClassReference(ParentClass).ToString();
+
+	UClass* ParentBPClass = StaticLoadClass(UObject::StaticClass(), nullptr, *ClassName, nullptr, LOAD_None, nullptr);
 	// iterate over UClass, this might be heavy on performance, so keep in mind..
 	// better suggestions for a check are welcome
 	for (TObjectIterator<UClass> It; It; ++It)
@@ -21,7 +26,7 @@ TArray<UClass*> UCustomFunctions::GetClasses(UClass* ParentClass)
 		{
 			// It is a child of the Parent Class
 
-			
+			UE_LOG(LogTemp, Warning, TEXT("Class: %s"), *It->GetName());
 
 			// make sure we don't include our parent class in the array (weak name check, suggestions welcome)
 			if (It->GetName() != ParentClassName && !It->GetName().Contains("SKEL"))
@@ -82,3 +87,17 @@ EAttachPoint UCustomFunctions::GetSocketPointByName(FName SocketName)
 	}
 	return AttachPoint;
 }
+
+//UClass* UCustomFunctions::FindClass(const FString& ClassName) {
+//	check(*ClassName);
+//
+//	UObject* ClassPackage = ANY_PACKAGE;
+//
+//	UClass* Result = StaticLoadClass(UObject::StaticClass(), nullptr, *ClassName, nullptr, LOAD_None, nullptr);
+//
+//	//UClass* blueprintClass = FindObject(ANY_PACKAGE, TEXT("/Game/Blueprints/GameState/GameMode_Parent.GameMode_Parent_C"));
+//
+//	//UClass* Result = FindObject<UClass>(ClassPackage, ClassName);
+//
+//	return nullptr;
+//}

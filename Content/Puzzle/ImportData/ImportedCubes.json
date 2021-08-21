@@ -1,0 +1,26 @@
+{
+  "OwnedCubes": 
+  [
+    {
+      "Name": "Cube1",
+      "BaseHealth": 100.0,
+      "BaseArmour": 15.0,
+      "BaseSpeed": 1,
+      "Colours": [ 0.5, 0.5, 0.5, 0 ]
+    },
+    {
+      "Name": "Cube2",
+      "BaseHealth": 150.0,
+      "BaseArmour": 10.0,
+      "BaseSpeed": 1,
+      "Colours": [ 0, 0, 0, 0 ]
+    },
+    {
+      "Name": "Cube3",
+      "BaseHealth": 80.0,
+      "BaseArmour": 20.0,
+      "BaseSpeed": 2,
+      "Colours": [ 0.5, 0.5, 1, 0 ]
+    }
+  ]
+}
